@@ -1,0 +1,28 @@
+Aisha Patel
+Email: aisha.patel@outlook.com | Phone: (512) 555-9012 | Location: Austin, TX
+
+PROFESSIONAL SUMMARY
+Analytical and detail-oriented Data Analyst with 3 years of experience specializing in complex SQL querying, dashboard development in Tableau, and exploratory Python data analysis. Seeking to transition into Machine Learning and Data Science.
+
+EDUCATION
+Bachelor of Science in Economics & Minor in Statistics
+University of Texas at Austin | 2021
+
+EXPERIENCE
+Data Analyst | LoneStar Financial Services, Austin, TX
+2021 - Present
+• Authored advanced SQL queries involving multi-table joins, subqueries, and window functions on PostgreSQL database.
+• Performed exploratory data analysis in Python using Pandas and NumPy to identify customer attrition trends.
+• Designed and published 15+ interactive executive dashboards in Tableau.
+• Ran hypothesis testing and statistical power calculations for marketing campaigns.
+
+Business Intelligence Intern | FinMetrics Austin, TX
+2020 - 2021
+• Assisted in cleaning and validating transaction data using Excel and Python.
+• Maintained KPI reporting tracking quarterly revenue and conversion rates.
+
+SKILLS
+• Languages: SQL, Python (Pandas, NumPy, Matplotlib)
+• BI Tools: Tableau, Power BI, Excel
+• Databases: PostgreSQL, MySQL
+• Statistical Methods: Regression, Hypothesis Testing, ANOVA, Descriptive Statistics

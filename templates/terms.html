@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms and Conditions - Candidate Requirement Analysis Portal</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body style="min-height: 100vh; padding: 2rem 1.5rem;">
+
+    <div style="max-width: 900px; margin: 0 auto;">
+        
+        <!-- Header -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 1.25rem;">
+            <div>
+                <a href="/" style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                    <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i> Return to Portal
+                </a>
+                <h1 style="font-size: 1.6rem; font-weight: 800; color: var(--text-primary);">Terms and Conditions</h1>
+                <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem;">Last Updated: September 2026 : Document Ref: TC-ENT-2026-V1</div>
+            </div>
+            <a href="/" class="btn btn-secondary" style="border-radius: 4px; font-size: 0.82rem;">Back to Dashboard</a>
+        </div>
+
+        <!-- Content -->
+        <div class="glass-panel" style="padding: 2.25rem; border-radius: 6px; display: flex; flex-direction: column; gap: 1.75rem; line-height: 1.65; font-size: 0.9rem; color: var(--text-secondary);">
+            
+            <section>
+                <h2 style="font-size: 1.1rem; color: var(--text-primary); margin-bottom: 0.5rem;">1. Purpose and Permitted Use</h2>
+                <p>
+                    This software system is an enterprise assistive tool built exclusively for authorized data scientists, recruitment specialists, and hiring managers. Its function is to perform automated semantic parsing of submitted resume files against published job description criteria. The system calculates mathematical match alignment scores, flags textual irregularities, and suggests structured interview questions.
+                </p>
+            </section>
+
+            <section>
+                <h2 style="font-size: 1.1rem; color: var(--text-primary); margin-bottom: 0.5rem;">2. Prohibition of Autonomous Employment Decisions</h2>
+                <p>
+                    The outputs produced by this system, including the Fit Score (0-100%), Confidence Level, Match indicators, and Integrity Flags, are strictly advisory signals designed to accelerate recruiter review. Under no circumstances should any employment decision (including interview invitations, rejections, or hiring outcomes) be executed solely on the basis of an automated score or flag. Human recruiter evaluation remains mandatory.
+                </p>
+            </section>
+
+            <section>
+                <h2 style="font-size: 1.1rem; color: var(--text-primary); margin-bottom: 0.5rem;">3. Strict Non-Discrimination and Equal Opportunity Covenant</h2>
+                <p>
+                    The parsing and scoring algorithms operate strictly on job-relevant skills, verified educational credentials, demonstrated work achievements, and technical project history. The system is architected to exclude, ignore, and refuse inference on protected personal characteristics, including age, gender, race, ethnicity, caste, religion, sexual orientation, disability status, marital status, or political affiliation.
+                </p>
+            </section>
+
+            <section>
+                <h2 style="font-size: 1.1rem; color: var(--text-primary); margin-bottom: 0.5rem;">4. Integrity Flags and AI Signal Limitations</h2>
+                <p>
+                    Integrity signals, such as Duplicate Detection, Repeated Content, and AI-Generated Content signals, represent probabilistic statistical heuristics. They are provided solely to alert recruiters to sections requiring visual verification. A flag indicating potential AI generation does not constitute proof of misrepresentation and must never be utilized as grounds for candidate disqualification.
+                </p>
+            </section>
+
+            <section>
+                <h2 style="font-size: 1.1rem; color: var(--text-primary); margin-bottom: 0.5rem;">5. Data Ownership and Document Retention</h2>
+                <p>
+                    The operating organization retains complete ownership and confidentiality of all job descriptions and applicant resumes processed through this deployment. Extracted vectors, indices, and candidate dossiers are processed in compliance with organization privacy controls and local data protection regulations.
+                </p>
+            </section>
+
+            <section>
+                <h2 style="font-size: 1.1rem; color: var(--text-primary); margin-bottom: 0.5rem;">6. Disclaimer of Warranty</h2>
+                <p>
+                    This analytical tool is provided on an "as is" and "as available" basis without warranties of any kind. The software does not guarantee that candidate extractions or matching calculations are error-free. Hiring teams are required to conduct independent reference checks and technical assessments.
+                </p>
+            </section>
+
+        </div>
+
+        <div style="margin-top: 2rem; text-align: center; font-size: 0.78rem; color: var(--text-muted);">
+            Enterprise Recruitment Analytics Portal : Internal Governance Documentation
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

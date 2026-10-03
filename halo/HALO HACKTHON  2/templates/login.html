@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise Portal Authentication - Resume Matcher</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body style="display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 1.5rem;">
+
+    <div class="glass-panel" style="width: 100%; max-width: 440px; padding: 2.5rem 2rem; border-radius: 6px;">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <div style="width: 44px; height: 44px; background: #2563EB; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; color: #FFF; margin-bottom: 1rem;">
+                <i data-lucide="shield-check" style="width: 24px; height: 24px;"></i>
+            </div>
+            <h1 style="font-size: 1.4rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.35rem;">Enterprise Assessor Sign In</h1>
+            <p style="font-size: 0.82rem; color: var(--text-muted);">Candidate Requirement Analysis & Screening Workspace</p>
+        </div>
+
+        <form action="/login" method="POST" style="display: flex; flex-direction: column; gap: 1.25rem;">
+            <div>
+                <label for="loginEmail" style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.4rem;">Corporate Email</label>
+                <input type="email" id="loginEmail" name="email" value="lead.evaluator@recruitment.internal" required class="search-input" style="padding-left: 0.85rem; border-radius: 4px;">
+            </div>
+
+            <div>
+                <label for="loginPassword" style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.4rem;">Password</label>
+                <input type="password" id="loginPassword" name="password" value="InternalEvaluationToken2026" required class="search-input" style="padding-left: 0.85rem; border-radius: 4px;">
+            </div>
+
+            <div>
+                <label for="loginRole" style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.4rem;">Assessor Role</label>
+                <select id="loginRole" name="role" class="search-input" style="padding-left: 0.85rem; border-radius: 4px; background: #1E293B;">
+                    <option value="Lead Data Scientist">Lead Data Scientist</option>
+                    <option value="Senior Talent Evaluator">Senior Talent Evaluator</option>
+                    <option value="Technical Recruitment Manager">Technical Recruitment Manager</option>
+                    <option value="Systems Auditor">Systems Auditor</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; border-radius: 4px; padding: 0.75rem; font-weight: 600; margin-top: 0.5rem;">
+                Sign In to Assessment Portal
+            </button>
+        </form>
+
+        <div style="margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);">
+            <a href="/terms" style="color: var(--text-secondary);">Terms and Conditions</a>
+            <a href="/privacy" style="color: var(--text-secondary);">Privacy Policy</a>
+            <a href="/" style="color: #2563EB;">Direct Dashboard</a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

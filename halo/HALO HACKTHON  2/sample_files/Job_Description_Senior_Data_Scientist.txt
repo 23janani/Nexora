@@ -1,0 +1,20 @@
+Job Title: Senior Data Scientist - GenAI & MLOps
+Department: Advanced Analytics & AI
+Location: San Francisco, CA / Remote
+
+About the Role:
+We are seeking an experienced Senior Data Scientist to architect and scale our enterprise generative AI and machine learning infrastructure. You will work closely with cross-functional product and engineering teams to translate high-impact business problems into robust predictive models.
+
+Requirements (Must-Have):
+• 4+ years of professional industry experience in data science, predictive modeling, or machine learning engineering.
+• Advanced proficiency in Python, including deep familiarity with scientific libraries such as Pandas, NumPy, and Scikit-learn.
+• Proven track record of machine learning model development, validation, and evaluation in production environments.
+• Experience with SQL and relational databases (PostgreSQL, Snowflake, or BigQuery) for complex data extraction and feature engineering.
+• Hands-on experience with cloud infrastructure, specifically AWS (EC2, S3, SageMaker, or Lambda) for model training and deployment.
+• Solid foundation in statistics, probability, and exploratory data analysis.
+
+Preferred Qualifications (Nice-to-Have):
+• Experience with Deep Learning frameworks (PyTorch or TensorFlow) and LLM orchestration (LangChain, Hugging Face).
+• Working knowledge of MLOps best practices, Docker containerization, Kubernetes, and automated CI/CD pipelines.
+• Master's or Ph.D. degree in Computer Science, Statistics, Mathematics, Data Science, or related quantitative field.
+• Excellent communication skills with ability to present technical insights to non-technical leadership.

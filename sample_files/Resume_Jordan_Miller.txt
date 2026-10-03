@@ -1,0 +1,26 @@
+Jordan Miller
+Email: jordan.miller@techworks.io | Phone: (312) 555-4819 | Location: Chicago, IL
+
+PROFILE
+Frontend Web Developer with 3 years of experience building modern, responsive web applications using React, JavaScript, HTML5, CSS3, and Node.js.
+
+EDUCATION
+Bachelor of Arts in Graphic Design & Web Communications
+University of Illinois Chicago | 2021
+
+PROFESSIONAL EXPERIENCE
+Frontend Developer | WebPulse Studios, Chicago, IL
+2021 - Present
+• Developed single-page applications using React, TypeScript, and Tailwind CSS.
+• Integrated REST APIs with Redux for state management.
+• Optimized web page performance, achieving 95+ Google Lighthouse scores.
+• Collaborated with UX designers in Figma to build accessible, mobile-first design systems.
+
+Junior Web Developer | Creativo Digital, Chicago, IL
+2020 - 2021
+• Built landing pages with HTML5, CSS3, and vanilla JavaScript.
+• Maintained client websites using WordPress and PHP.
+
+SKILLS
+• Frontend: JavaScript, TypeScript, React, HTML5, CSS3, Sass, Tailwind CSS
+• Backend/Tools: Node.js, Express, Git, Figma, Webpack, Vite

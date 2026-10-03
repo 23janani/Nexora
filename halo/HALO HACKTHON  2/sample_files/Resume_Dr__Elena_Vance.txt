@@ -1,0 +1,42 @@
+Dr. Elena Vance, Ph.D.
+Email: elena.vance@alum.stanford.edu | Phone: (415) 555-0194 | Location: San Francisco, CA
+LinkedIn: linkedin.com/in/elenavance-ds | GitHub: github.com/elenavance-ai
+
+PROFESSIONAL SUMMARY
+Senior Data Scientist with 6+ years of specialized experience architecting predictive machine learning pipelines, LLM solutions, and cloud-native MLOps architectures. Proven track record deploying models serving 5M+ daily requests on AWS with high reliability and low latency.
+
+EDUCATION
+Ph.D. in Computer Science (Machine Learning Specialization)
+Stanford University, Stanford, CA | 2018
+• Dissertation: Efficient Transformer Architectures for Contextual Language Modeling
+• Master of Science in Statistics, Stanford University | 2015
+
+WORK EXPERIENCE
+Staff Data Scientist | Apex Machine Intelligence, San Francisco, CA
+2021 - Present
+• Spearheaded predictive models using scikit-learn, XGBoost, and PyTorch for customer risk scoring, lifting prediction accuracy by 24%.
+• Architected end-to-end cloud deployment pipelines utilizing AWS EC2, S3, and SageMaker with Docker containerization.
+• Designed automated MLOps CI/CD pipelines incorporating MLflow and Kubernetes, reducing retraining turnaround time from 2 weeks to 4 hours.
+• Wrote high-performance PostgreSQL and Snowflake queries for real-time feature store ingestion, handling 100GB+ daily transaction streams.
+
+Senior Machine Learning Engineer | Stratum Data Labs, San Jose, CA
+2018 - 2021
+• Built predictive models using scikit-learn and LightGBM for e-commerce conversion forecasting.
+• Maintained strong Python-based data analysis workflows with Pandas, NumPy, and SciPy for exploratory data modeling and hypothesis testing.
+• Deployed microservices on AWS Lambda and FastAPI handling real-time inference with sub-40ms response latency.
+• Mentored 5 junior data scientists and established team coding standards and testing protocols.
+
+TECHNICAL SKILLS
+• Programming Languages: Python, SQL, R, Bash
+• Frameworks & Libraries: PyTorch, TensorFlow, Scikit-learn, Pandas, NumPy, SciPy, Hugging Face, XGBoost, FastAPI
+• Cloud & MLOps: AWS (EC2, S3, SageMaker, Lambda), Docker, Kubernetes, MLflow, CI/CD, Git
+• Databases: PostgreSQL, Snowflake, BigQuery, Redis
+• Concepts: Supervised Learning, Deep Learning, Natural Language Processing, MLOps, A/B Testing, Feature Engineering
+
+KEY PROJECTS
+• Enterprise LLM Knowledge Retrieval System: Implemented vector search embeddings and contextual retrieval pipelines reducing hallucination rates by 35%.
+• Real-time Churn Forecasting Engine: Built multi-task neural network on AWS SageMaker, decreasing customer churn by $3.2M annually.
+
+CERTIFICATIONS
+• AWS Certified Machine Learning - Specialty
+• Databricks Certified Machine Learning Professional

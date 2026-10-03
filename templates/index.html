@@ -1,0 +1,1487 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume-JD Match Portal : Candidate Requirement Analysis</title>
+    <meta name="description" content="Enterprise resume and job description semantic matching system. Automated parsing, requirement comparison, and candidate qualification verification.">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    
+    <!-- Design Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        if (typeof window.lucide === 'undefined') {
+            window.lucide = { createIcons: function() {} };
+        }
+    </script>
+    
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+    <!-- TOP NAVIGATION & ENTERPRISE HEADER -->
+    <nav class="top-navbar">
+        <div class="brand-container">
+            <div class="brand-logo">
+                <i data-lucide="layers" style="width: 18px; height: 18px;"></i>
+            </div>
+            <div class="brand-title">
+                Resume Matcher <span style="color: #2563EB;">Enterprise</span>
+            </div>
+            
+            <span class="nav-portal-badge {{ 'nav-portal-candidate' if initial_mode == 'user' else 'nav-portal-hr' }}" id="navPortalBadge">
+                <i data-lucide="{{ 'user' if initial_mode == 'user' else 'shield-check' }}" style="width: 12px; height: 12px;"></i>
+                <span id="navPortalBadgeText">{{ 'Candidate Portal' if initial_mode == 'user' else 'HR Recruiter Portal' }}</span>
+            </span>
+        </div>
+
+        <div class="navbar-center">
+            <div class="nav-target-indicator" id="activeJdPill" title="Active Target Job Description">
+                <span class="pulse-dot"></span>
+                <span class="nav-target-prefix">Target:</span>
+                <span class="nav-target-text" id="activeJdTitle">Senior Data Scientist - GenAI & MLOps</span>
+            </div>
+        </div>
+
+        <div class="navbar-actions">
+            <!-- HR Recruiter Actions Group -->
+            <div class="nav-action-group" id="hrNavActionGroup" style="display: {{ 'flex' if initial_mode == 'recruiter' else 'none' }}; align-items: center; gap: 0.5rem;">
+                <button class="btn btn-secondary" id="btnOpenEmailMonitorModal" style="font-size: 0.76rem; border-color: rgba(34, 197, 94, 0.45); background: rgba(34, 197, 94, 0.07);" title="Connect HR mailbox to auto-monitor for incoming resume applications">
+                    <i data-lucide="mail-check" style="width: 13px; height: 13px; color: #22C55E;"></i>
+                    <span>Auto-Monitor</span>
+                    <span id="emailMonitorStatusDot" style="width: 7px; height: 7px; border-radius: 50%; background: #4B5563; display: inline-block; margin-left: 2px;" title="Monitor inactive"></span>
+                </button>
+                <button class="btn btn-secondary" id="btnOpenEmailIngestModal" style="font-size: 0.76rem; border-color: rgba(37, 99, 235, 0.4);" title="Ingest incoming candidate application email">
+                    <i data-lucide="mail" style="width: 13px; height: 13px; color: #2563EB;"></i>
+                    <span>Ingest Email</span>
+                </button>
+                <button class="btn btn-primary" id="loadDemoBatchBtn" style="font-size: 0.76rem;" title="Load standardized candidate dataset">
+                    <i data-lucide="database" style="width: 13px; height: 13px;"></i>
+                    <span>Load Dataset</span>
+                </button>
+                <button class="btn btn-secondary btn-icon" id="domainConfigBtn" title="Custom Domain: {{ custom_domain }}">
+                    <i data-lucide="globe" style="width: 14px; height: 14px;"></i>
+                </button>
+            </div>
+
+            <!-- Candidate Actions Group -->
+            <div class="nav-action-group" id="candidateNavActionGroup" style="display: {{ 'flex' if initial_mode == 'user' else 'none' }}; align-items: center; gap: 0.5rem;">
+                <button class="btn btn-secondary" onclick="document.getElementById('userResumeDropzone')?.scrollIntoView({behavior: 'smooth'})" style="font-size: 0.76rem;" title="Upload resume for evaluation">
+                    <i data-lucide="upload-cloud" style="width: 13px; height: 13px; color: #16A34A;"></i>
+                    <span>Upload Resume</span>
+                </button>
+            </div>
+
+            <!-- Mode Switcher: Recruiter vs Candidate Mode -->
+            <div class="mode-switcher-group">
+                <button type="button" class="mode-tab-btn {{ 'active' if initial_mode == 'recruiter' else '' }}" id="btnModeRecruiter" title="Switch to Recruiter Mode">
+                    <i data-lucide="briefcase" style="width: 12px; height: 12px;"></i>
+                    <span>Recruiter</span>
+                </button>
+                <button type="button" class="mode-tab-btn {{ 'active' if initial_mode == 'user' else '' }}" id="btnModeUser" title="Switch to Candidate Mode">
+                    <i data-lucide="user-check" style="width: 12px; height: 12px;"></i>
+                    <span>Candidate</span>
+                </button>
+            </div>
+
+            <!-- User Session Pill -->
+            <div class="nav-user-pill" title="Signed in as {{ user.email if user else 'Assessor' }}">
+                <i data-lucide="user" style="width: 13px; height: 13px; color: var(--text-muted);"></i>
+                <span class="nav-user-name">{{ user.name if user else 'Assessor' }}</span>
+                <span class="nav-user-tag {{ 'candidate-tag' if user and user.user_type == 'candidate' else '' }}" id="navUserRoleTag">
+                    {{ 'Candidate' if user and user.user_type == 'candidate' else 'HR' }}
+                </span>
+            </div>
+
+            <!-- Switch Account / Sign Out -->
+            <a href="/logout" class="btn btn-secondary btn-icon" title="Sign Out or Switch Portal" style="font-size: 0.76rem;">
+                <i data-lucide="log-out" style="width: 14px; height: 14px;"></i>
+            </a>
+
+            <!-- Theme Toggle -->
+            <button class="theme-toggle-btn" id="themeToggleBtn" title="Toggle Light/Dark Theme">
+                <i data-lucide="sun" id="themeIcon" style="width: 15px; height: 15px;"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- MAIN DASHBOARD CONTENT -->
+    <main class="main-content">
+
+        <!-- RECRUITER MODE WORKSPACE -->
+        <div id="recruiterWorkspace">
+
+        <!-- VERIFIABLE RECRUITER METRICS STRIP -->
+        <section class="kpi-grid">
+            <div class="glass-panel kpi-card kpi-info">
+                <div>
+                    <div class="kpi-label">Active Candidate Pool</div>
+                    <div class="kpi-value" id="statProcessedToday">7</div>
+                    <div class="kpi-subtext">Verified resumes in current workspace</div>
+                </div>
+                <div class="kpi-icon-box">
+                    <i data-lucide="file-text" style="width: 20px; height: 20px;"></i>
+                </div>
+            </div>
+
+            <div class="glass-panel kpi-card kpi-match">
+                <div>
+                    <div class="kpi-label">High-Match Candidates (>=80%)</div>
+                    <div class="kpi-value" id="statHighMatches" style="color: var(--color-match);">3</div>
+                    <div class="kpi-subtext">Meeting primary requirements</div>
+                </div>
+                <div class="kpi-icon-box">
+                    <i data-lucide="check-circle-2" style="width: 20px; height: 20px; color: var(--color-match);"></i>
+                </div>
+            </div>
+
+            <div class="glass-panel kpi-card">
+                <div>
+                    <div class="kpi-label">Average Fit Score</div>
+                    <div class="kpi-value" id="statAvgFit">63%</div>
+                    <div class="kpi-subtext">Weighted qualification match</div>
+                </div>
+                <div class="kpi-icon-box">
+                    <i data-lucide="activity" style="width: 20px; height: 20px;"></i>
+                </div>
+            </div>
+
+            <div class="glass-panel kpi-card kpi-warning">
+                <div>
+                    <div class="kpi-label">Review Flags</div>
+                    <div class="kpi-value" id="statReviewFlags" style="color: var(--color-flag);">3</div>
+                    <div class="kpi-subtext">Candidates requiring manual verification</div>
+                </div>
+                <div class="kpi-icon-box">
+                    <i data-lucide="alert-triangle" style="width: 20px; height: 20px; color: var(--color-flag);"></i>
+                </div>
+            </div>
+
+            <div class="glass-panel kpi-card">
+                <div>
+                    <div class="kpi-label">Duplicate Resumes</div>
+                    <div class="kpi-value" id="statDuplicates">1</div>
+                    <div class="kpi-subtext">Identified via content overlap</div>
+                </div>
+                <div class="kpi-icon-box">
+                    <i data-lucide="copy" style="width: 20px; height: 20px;"></i>
+                </div>
+            </div>
+
+            <div class="glass-panel kpi-card kpi-slate">
+                <div>
+                    <div class="kpi-label">AI Content Signals</div>
+                    <div class="kpi-value" id="statAiSignals">1</div>
+                    <div class="kpi-subtext">Informational review signal only</div>
+                </div>
+                <div class="kpi-icon-box">
+                    <i data-lucide="file-search" style="width: 20px; height: 20px;"></i>
+                </div>
+            </div>
+        </section>
+
+        <!-- DUAL-PANE WORKSPACE: RESUME UPLOAD + JD STUDIO -->
+        <section class="workspace-grid">
+            
+            <!-- PANE A: RESUME INPUT -->
+            <div class="glass-panel">
+                <div class="section-header">
+                    <div class="section-title">
+                        <i data-lucide="upload-cloud" style="color: var(--color-accent); width: 18px; height: 18px;"></i>
+                        <span>Resume Ingestion and Processing</span>
+                    </div>
+                    <span style="font-size: 0.72rem; color: var(--text-muted);">PDF, DOCX, DOC, TXT, PNG, JPG (OCR)</span>
+                </div>
+                <div class="section-body">
+                    <!-- Dropzone -->
+                    <div class="dropzone" id="resumeDropzone">
+                        <div class="dropzone-icon">
+                            <i data-lucide="upload-cloud" style="width: 28px; height: 28px;"></i>
+                        </div>
+                        <div class="dropzone-title">Upload Multiple Resumes for Automated Processing</div>
+                        <div class="dropzone-desc">Drag and drop single or multiple candidate resumes (support for 1 to 50+ files in one batch). Native OCR executes for scanned image and PDF formats.</div>
+                        <div class="dropzone-formats">
+                            <span class="format-badge">PDF</span>
+                            <span class="format-badge">DOCX</span>
+                            <span class="format-badge">DOC</span>
+                            <span class="format-badge">TXT</span>
+                            <span class="format-badge">PNG</span>
+                            <span class="format-badge">JPG</span>
+                        </div>
+                        <div style="margin-top: 0.85rem; display: flex; gap: 0.6rem; justify-content: center; flex-wrap: wrap;">
+                            <button type="button" class="btn btn-primary" id="btnSelectMultipleFiles" style="padding: 0.4rem 0.85rem; font-size: 0.78rem;">
+                                <i data-lucide="files" style="width: 14px; height: 14px;"></i> Select Multiple Resumes
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="btnLoadBatchSample" style="padding: 0.4rem 0.85rem; font-size: 0.78rem;">
+                                <i data-lucide="layers" style="width: 14px; height: 14px;"></i> Load Standard Batch
+                            </button>
+                        </div>
+                        <input type="file" id="resumeFileInput" multiple accept=".pdf,.docx,.doc,.txt,.png,.jpg,.jpeg" style="display: none;">
+                    </div>
+
+                    <div class="upload-queue-container" id="uploadQueueList"></div>
+
+                    <div style="margin-top: 0.85rem; font-size: 0.74rem; color: var(--text-muted);">
+                        Ready-to-test files are available in the local directory: <code>sample_files/</code>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANE B: JOB DESCRIPTION INPUT -->
+            <div class="glass-panel">
+                <div class="section-header">
+                    <div class="section-title">
+                        <i data-lucide="briefcase" style="color: #2563EB; width: 18px; height: 18px;"></i>
+                        <span>Job Description Criteria</span>
+                    </div>
+                    <span style="font-size: 0.72rem; color: var(--text-muted);">NLP Requirement Parser</span>
+                </div>
+                <div class="section-body">
+                    <div class="jd-tabs">
+                        <button class="jd-tab-btn active" id="jdTabPaste">Paste Text Requirements</button>
+                        <button class="jd-tab-btn" id="jdTabFile">Upload JD Document</button>
+                    </div>
+
+                    <div id="jdTextSection">
+                        <textarea class="jd-textarea" id="jdTextarea" placeholder="Enter complete job requirements: must-have technical qualifications, preferred background, and duties..."></textarea>
+                    </div>
+
+                    <div id="jdFileSection" style="display: none;">
+                        <div style="border: 1px dashed var(--border-subtle); padding: 2rem; border-radius: var(--radius-md); text-align: center;">
+                            <input type="file" id="jdFileInput" accept=".pdf,.docx,.doc,.txt,.png,.jpg">
+                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">Supports PDF, Word DOCX, TXT, or Image files.</div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 0.75rem;">
+                        <div class="jd-presets-bar">
+                            <span style="font-size: 0.72rem; color: var(--text-muted);">Role Presets:</span>
+                            <span class="preset-chip" data-preset="senior_ds">Senior Data Scientist</span>
+                            <span class="preset-chip" data-preset="ml_infra">ML Platform Engineer</span>
+                            <span class="preset-chip" data-preset="analyst">BI and Data Analyst</span>
+                        </div>
+                        <button class="btn btn-primary" id="processJdBtn" style="padding: 0.45rem 0.9rem;">
+                            <i data-lucide="refresh-cw" style="width: 13px; height: 13px;"></i> Update Target Criteria
+                        </button>
+                    </div>
+
+                    <div id="jdStatusMsg" style="margin-top: 0.65rem; font-size: 0.75rem;"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- IMMEDIATE FIT SCORE & ASSESSMENT REPORT BANNER -->
+        <section id="immediateReportSection" class="glass-panel" style="display: none; margin-bottom: 1.5rem; border: 1px solid var(--border-active); background: var(--bg-card); position: relative;">
+            <div class="section-header" style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+                    <span class="flag-badge flag-clean" style="font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Latest Upload Evaluation</span>
+                    <span id="immediateCandidateName" style="font-weight: 700; font-size: 1.05rem; color: var(--text-primary);">Candidate Assessment</span>
+                    <span id="immediateFilename" style="font-size: 0.76rem; color: var(--text-muted); font-family: var(--font-mono);">filename.pdf</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <button class="btn btn-primary" id="immediateOpenModalBtn" style="padding: 0.35rem 0.85rem; font-size: 0.78rem;">
+                        <i data-lucide="scan-eye" style="width: 14px; height: 14px;"></i> View Full Assessment Dossier
+                    </button>
+                    <a id="immediateDossierLink" href="#" class="btn btn-secondary" style="padding: 0.35rem 0.8rem; font-size: 0.78rem;">
+                        <i data-lucide="download" style="width: 14px; height: 14px;"></i> Download PDF Dossier
+                    </a>
+                    <button class="btn btn-secondary" id="immediateDismissBtn" style="padding: 0.35rem 0.6rem; font-size: 0.78rem;" title="Dismiss banner">
+                        <i data-lucide="x" style="width: 14px; height: 14px;"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Batch Ingestion Navigation Bar -->
+            <div id="immediateBatchNav" style="display: none; padding: 0.6rem 0.85rem; background: rgba(0,0,0,0.2); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); margin-bottom: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.6rem;">
+                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                    <span class="flag-badge flag-clean" id="immediateBatchCountBadge">Batch Ingestion (0 Resumes)</span>
+                    <span style="font-size: 0.74rem; color: var(--text-secondary);">Select candidate below to inspect fit score and dossier:</span>
+                </div>
+                <div id="immediateBatchChips" style="display: flex; gap: 0.4rem; flex-wrap: wrap;"></div>
+            </div>
+
+            <div class="immediate-report-grid">
+                <!-- Score Card Left -->
+                <div class="immediate-score-col">
+                    <div class="immediate-score-box" id="immediateScoreBox">
+                        <div class="immediate-score-number" id="immediateScoreNumber">0%</div>
+                        <div class="immediate-score-label">OVERALL FIT SCORE</div>
+                    </div>
+                    <div class="immediate-conf-box">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
+                            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Analysis Confidence</span>
+                            <span id="immediateConfidenceVal" style="font-weight: 700; color: #60A5FA; font-size: 0.85rem;">0%</span>
+                        </div>
+                        <div id="immediateConfidenceText" style="font-size: 0.7rem; color: var(--text-muted); line-height: 1.35;">High Document Fidelity</div>
+                    </div>
+                    <div class="matches-pill-group" style="margin-top: 0.75rem; justify-content: center;">
+                        <span class="pill-count pill-match" id="immediateMatchCount">MATCH: 0</span>
+                        <span class="pill-count pill-partial" id="immediatePartialCount">PARTIAL: 0</span>
+                        <span class="pill-count pill-gap" id="immediateGapCount">GAP: 0</span>
+                    </div>
+                </div>
+
+                <!-- Executive Summary & Highlights Right -->
+                <div class="immediate-details-col">
+                    <div style="margin-bottom: 0.75rem;">
+                        <div style="font-size: 0.74rem; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 0.35rem; letter-spacing: 0.5px;">
+                            Executive Assessment Summary
+                        </div>
+                        <div id="immediateSummaryText" style="font-size: 0.84rem; color: var(--text-primary); line-height: 1.5; background: var(--bg-tertiary); padding: 0.75rem 0.9rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                            Analysis summary will be rendered here.
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                        <div>
+                            <div style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--color-match); margin-bottom: 0.3rem; letter-spacing: 0.5px;">
+                                [MATCH] Verified Strengths
+                            </div>
+                            <div id="immediateMatchesList" style="display: flex; flex-direction: column; gap: 0.3rem;"></div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--color-gap); margin-bottom: 0.3rem; letter-spacing: 0.5px;">
+                                [GAP] Critical Missing Criteria
+                            </div>
+                            <div id="immediateGapsList" style="display: flex; flex-direction: column; gap: 0.3rem;"></div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 0.75rem; padding-top: 0.6rem; border-top: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted); flex-wrap: wrap; gap: 0.5rem;">
+                        <div id="immediateFormulaText">
+                            <b>Formula:</b> (Must-Have 70%) + (Nice-to-Have 30%)
+                        </div>
+                        <div>
+                            Candidate added to live evaluation pool below
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CANDIDATES ANALYTICS TABLE -->
+        <section class="glass-panel">
+            <div class="table-controls">
+                <div style="display: flex; align-items: center; gap: 0.85rem; flex-wrap: wrap;">
+                    <div class="search-input-wrapper">
+                        <i data-lucide="search" class="search-icon" style="width: 15px; height: 15px;"></i>
+                        <input type="text" class="search-input" id="candidateSearch" placeholder="Filter by candidate name, skill, or keyword...">
+                    </div>
+                    <div class="filter-pills">
+                        <button class="filter-pill active" data-filter="all">All Candidates</button>
+                        <button class="filter-pill" data-filter="high_match">High Match (>=80%)</button>
+                        <button class="filter-pill" data-filter="mid_match">Mid Match (50-79%)</button>
+                        <button class="filter-pill" data-filter="clean">Verified Clean</button>
+                        <button class="filter-pill" data-filter="flagged">Needs Review</button>
+                        <button class="filter-pill" data-filter="duplicate">Duplicates</button>
+                        <button class="filter-pill" data-filter="ai_signal">AI Content Signals</button>
+                        <button class="filter-pill" data-filter="repeated">Repeated Text</button>
+                    </div>
+                </div>
+                <div id="tableCandidateCount" style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">
+                    Loading candidate pool...
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable('name')">Candidate Profile ↕</th>
+                            <th onclick="sortTable('fit_score')">Overall Fit Score ↕</th>
+                            <th onclick="sortTable('confidence')">Analysis Confidence ↕</th>
+                            <th>Requirement Breakdown</th>
+                            <th>Integrity Signals</th>
+                            <th>Status</th>
+                            <th style="text-align: right;">Evaluation</th>
+                        </tr>
+                    </thead>
+                    <tbody id="candidatesTableBody">
+                        <!-- Dynamic Candidate Rows -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        </div><!-- /#recruiterWorkspace -->
+
+        <!-- CANDIDATE / USER MODE DEDICATED WORKSPACE -->
+        <div id="userModeWorkspace" style="display: none;">
+            <!-- User Mode Header -->
+            <div class="user-mode-header">
+                <span class="user-mode-badge">Candidate Self-Assessment Portal</span>
+                <h2 class="user-mode-title">Target Role Qualification & Interview Readiness Analysis</h2>
+                <p class="user-mode-desc">
+                    Evaluate your resume against target technical requirements. The system identifies satisfied qualifications, maps critical skill gaps, and synthesizes 7 to 10 tailored mock interview questions formulated strictly on your missing requirements with candidate coaching tips.
+                </p>
+            </div>
+
+            <!-- User Mode Inputs Grid -->
+            <div class="user-workspace-grid">
+                <!-- User Resume Input -->
+                <div class="user-input-box">
+                    <div class="user-input-title">
+                        <i data-lucide="file-text" style="width: 17px; height: 17px; color: #2563EB;"></i>
+                        <span>1. Your Resume Document</span>
+                    </div>
+                    <div class="user-input-subtitle">
+                        Upload your resume in PDF, DOCX, TXT, or Image format (native OCR supported).
+                    </div>
+
+                    <div class="dropzone" id="userResumeDropzone" style="padding: 1.5rem 1rem; margin-bottom: 0.75rem;">
+                        <i data-lucide="upload-cloud" style="width: 26px; height: 26px; color: #2563EB; margin-bottom: 0.4rem;"></i>
+                        <div style="font-size: 0.84rem; font-weight: 700; color: var(--text-primary);" id="userResumeDropzoneLabel">Drag & drop resume or click to select</div>
+                        <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.2rem;">PDF, DOCX, DOC, TXT, PNG, JPG</div>
+                        <input type="file" id="userResumeFileInput" accept=".pdf,.docx,.doc,.txt,.png,.jpg,.jpeg" style="display: none;">
+                    </div>
+
+                    <div style="display: flex; gap: 0.5rem; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-secondary" id="btnUserSelectFile" style="font-size: 0.76rem; padding: 0.35rem 0.75rem;">
+                            <i data-lucide="folder" style="width: 13px; height: 13px;"></i> Browse File
+                        </button>
+                        <div class="user-preset-row" style="margin-bottom: 0;">
+                            <span style="font-size: 0.7rem; color: var(--text-muted);">Quick Sample:</span>
+                            <button type="button" class="user-preset-btn" id="btnUserSampleMarcus">Marcus Chen</button>
+                            <button type="button" class="user-preset-btn" id="btnUserSampleElena">Elena Vance</button>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 0.85rem;">
+                        <div style="font-size: 0.74rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.3rem;">Or Paste Resume Text:</div>
+                        <textarea class="jd-textarea" id="userResumeTextarea" style="min-height: 90px;" placeholder="Paste raw resume sections here if not uploading a file..."></textarea>
+                    </div>
+                </div>
+
+                <!-- User Job Description Input -->
+                <div class="user-input-box">
+                    <div class="user-input-title">
+                        <i data-lucide="briefcase" style="width: 17px; height: 17px; color: #2563EB;"></i>
+                        <span>2. Target Job Description</span>
+                    </div>
+                    <div class="user-input-subtitle">
+                        Select a standard enterprise role preset or paste specific job requirements.
+                    </div>
+
+                    <div style="margin-bottom: 0.75rem;">
+                        <div style="font-size: 0.74rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.4rem;">Select Standard Target Role:</div>
+                        <div class="user-preset-row">
+                            <button type="button" class="user-preset-btn active" data-user-role="senior_ds_genai">Senior Data Scientist (GenAI & MLOps)</button>
+                            <button type="button" class="user-preset-btn" data-user-role="ml_platform_lead">ML Platform Engineer</button>
+                            <button type="button" class="user-preset-btn" data-user-role="bi_analytics_lead">BI & Data Analyst</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div style="font-size: 0.74rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.3rem;">Or Customize Target Requirements:</div>
+                        <textarea class="jd-textarea" id="userJdTextarea" style="min-height: 140px;" placeholder="Enter must-have qualifications, skills, and experience criteria..."></textarea>
+                    </div>
+
+                    <div style="margin-top: 0.75rem; display: flex; align-items: center; justify-content: space-between;">
+                        <div style="font-size: 0.72rem; color: var(--text-muted);">
+                            OCR and semantic matching parse both text and uploaded JD files.
+                        </div>
+                        <input type="file" id="userJdFileInput" accept=".pdf,.docx,.doc,.txt" style="display: none;">
+                        <button type="button" class="btn btn-secondary" id="btnUserBrowseJdFile" style="font-size: 0.74rem; padding: 0.3rem 0.65rem;">
+                            <i data-lucide="file-up" style="width: 13px; height: 13px;"></i> Upload JD File
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Analyze Action Button -->
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <button type="button" class="btn btn-primary" id="btnRunUserAnalysis" style="padding: 0.65rem 1.75rem; font-size: 0.9rem; font-weight: 700; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);">
+                    <i data-lucide="play" style="width: 16px; height: 16px;"></i> Analyze Alignment & Synthesize Gap-Based Questions
+                </button>
+                <div id="userAnalysisLoading" style="display: none; margin-top: 0.75rem; font-size: 0.8rem; color: #60A5FA;">
+                    <span class="pulse-dot"></span> Extracting credentials and synthesizing gap-anchored mock questions...
+                </div>
+            </div>
+
+            <!-- User Analysis Results Area -->
+            <div id="userResultsArea" class="user-results-wrapper" style="display: none;">
+                <!-- KPI & Executive Summary Strip -->
+                <div class="user-summary-grid">
+                    <div class="user-score-panel">
+                        <div class="user-score-circle" id="userScoreCircle">
+                            <span class="user-score-val" id="userFitScoreVal">0%</span>
+                            <span class="user-score-lbl">Fit Score</span>
+                        </div>
+                        <div style="font-size: 0.76rem; font-weight: 700; color: var(--text-primary);" id="userCandidateNameDisplay">Candidate Name</div>
+                        <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.2rem;" id="userTargetRoleDisplay">Target Role</div>
+                        <div style="margin-top: 0.75rem; font-size: 0.72rem; color: #60A5FA; background: rgba(37, 99, 235, 0.1); padding: 0.3rem 0.6rem; border-radius: var(--radius-sm); border: 1px solid rgba(37, 99, 235, 0.25);">
+                            Confidence: <b id="userConfidenceScoreVal">88%</b>
+                        </div>
+                    </div>
+
+                    <div class="user-detail-panel">
+                        <div>
+                            <div style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.4rem; letter-spacing: 0.5px;">
+                                Executive Qualification Assessment
+                            </div>
+                            <p id="userExecutiveSummaryText" style="font-size: 0.84rem; line-height: 1.5; color: var(--text-primary); margin-bottom: 0.85rem;"></p>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border-subtle);">
+                            <div>
+                                <div style="font-size: 0.7rem; color: var(--text-muted);">Verified Matches</div>
+                                <div style="font-size: 1.1rem; font-weight: 700; color: var(--color-match);" id="userMatchCount">0</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.7rem; color: var(--text-muted);">Partial Matches</div>
+                                <div style="font-size: 1.1rem; font-weight: 700; color: var(--color-partial);" id="userPartialCount">0</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.7rem; color: var(--text-muted);">Requirement Gaps</div>
+                                <div style="font-size: 1.1rem; font-weight: 700; color: var(--color-gap);" id="userGapCount">0</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.7rem; color: var(--text-muted);">Action Guide</div>
+                                <button type="button" class="btn btn-secondary" id="btnDownloadUserPrepPdf" style="font-size: 0.74rem; padding: 0.3rem 0.65rem; margin-top: 0.15rem;">
+                                    <i data-lucide="download" style="width: 12px; height: 12px;"></i> Export PDF
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Candidate Assessment 5-Tab Navigation Bar -->
+                <div class="user-results-nav-tabs" style="display: flex; gap: 0.5rem; border-bottom: 1px solid var(--border-subtle); margin: 1.25rem 0 1rem 0; overflow-x: auto; padding-bottom: 0.2rem;">
+                    <button type="button" class="modal-tab-btn active" id="btnUserTabOverview" onclick="switchUserTab('overview')">
+                        <i data-lucide="layout-dashboard" style="width: 13px; height: 13px;"></i> Executive Overview
+                    </button>
+                    <button type="button" class="modal-tab-btn" id="btnUserTabMatches" onclick="switchUserTab('matches')">
+                        <i data-lucide="check-circle-2" style="width: 13px; height: 13px;"></i> Verified Matches
+                    </button>
+                    <button type="button" class="modal-tab-btn" id="btnUserTabGaps" onclick="switchUserTab('gaps')">
+                        <i data-lucide="alert-circle" style="width: 13px; height: 13px;"></i> Skill Gaps
+                    </button>
+                    <button type="button" class="modal-tab-btn" id="btnUserTabQuestions" onclick="switchUserTab('questions')">
+                        <i data-lucide="help-circle" style="width: 13px; height: 13px;"></i> Mock Interview Questions
+                    </button>
+                    <button type="button" class="modal-tab-btn" id="btnUserTabRoadmap" onclick="switchUserTab('roadmap')" style="border-color: rgba(37, 99, 235, 0.4); color: #93C5FD;">
+                        <i data-lucide="map" style="width: 13px; height: 13px;"></i> Your Career Roadmap & Role Benchmarks
+                    </button>
+                </div>
+
+                <!-- TAB PANE 1: EXECUTIVE OVERVIEW -->
+                <div class="user-tab-pane" id="userPaneOverview">
+                    <div class="user-columns-grid">
+                        <div class="user-evidence-column">
+                            <div class="user-evidence-header matches">
+                                <i data-lucide="check-circle-2" style="width: 16px; height: 16px;"></i>
+                                <span>Verified Competencies and Matches</span>
+                            </div>
+                            <div class="user-evidence-list" id="userMatchesEvidenceList"></div>
+                        </div>
+                        <div class="user-evidence-column">
+                            <div class="user-evidence-header gaps">
+                                <i data-lucide="alert-circle" style="width: 16px; height: 16px;"></i>
+                                <span>Identified Skill Gaps (Interview Focus)</span>
+                            </div>
+                            <div class="user-evidence-list" id="userGapsEvidenceList"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB PANE 2: VERIFIED MATCHES DETAIL -->
+                <div class="user-tab-pane" id="userPaneMatches" style="display: none;">
+                    <div class="glass-panel" style="padding: 1.5rem;">
+                        <h3 style="font-size: 1rem; font-weight: 700; color: var(--color-match); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i data-lucide="check-circle-2" style="width: 18px; height: 18px;"></i> Verified Technical Competencies
+                        </h3>
+                        <div style="font-size: 0.76rem; color: var(--text-muted); margin-bottom: 1rem;">
+                            Requirements backed by verifiable sentence quotes and production evidence in your resume.
+                        </div>
+                        <div class="user-evidence-list" id="userFullMatchesList"></div>
+                    </div>
+                </div>
+
+                <!-- TAB PANE 3: SKILL GAPS DETAIL -->
+                <div class="user-tab-pane" id="userPaneGaps" style="display: none;">
+                    <div class="glass-panel" style="padding: 1.5rem;">
+                        <h3 style="font-size: 1rem; font-weight: 700; color: var(--color-gap); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i data-lucide="alert-circle" style="width: 18px; height: 18px;"></i> Identified Skill & Requirement Gaps
+                        </h3>
+                        <div style="font-size: 0.76rem; color: var(--text-muted); margin-bottom: 1rem;">
+                            Target requirements missing from your resume. Interviewers will focus their technical questions on these areas.
+                        </div>
+                        <div class="user-evidence-list" id="userFullGapsList"></div>
+                    </div>
+                </div>
+
+                <!-- TAB PANE 4: MOCK INTERVIEW QUESTIONS -->
+                <div class="user-tab-pane" id="userPaneQuestions" style="display: none;">
+                    <div class="glass-panel" style="padding: 1.5rem;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem;">
+                            <div>
+                                <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--text-primary);" id="userInterviewHeading">
+                                    Tailored Mock Interview Questions (Formulated from Identified Gaps)
+                                </h3>
+                                <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">
+                                    Synthesized dynamically from your missing skills. Use the Candidate Answer Strategy to prepare convincing responses for interviewers.
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                                <button type="button" class="btn btn-secondary" id="btnOpenUserAiCustomizer" style="font-size: 0.78rem; padding: 0.4rem 0.9rem;">
+                                    <i data-lucide="sparkles" style="width: 14px; height: 14px; color: #2563EB;"></i> Customize AI Plan
+                                </button>
+                                <button type="button" class="btn btn-primary" id="btnExportPrepFromQuestions" style="font-size: 0.78rem; padding: 0.4rem 0.9rem;">
+                                    <i data-lucide="file-down" style="width: 14px; height: 14px;"></i> Download Interview Prep Guide (PDF)
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="interview-cards-grid" id="userInterviewCardsList"></div>
+                    </div>
+                </div>
+
+                <!-- TAB PANE 5: YOUR CAREER ROADMAP & ROLE BENCHMARKS (FEATURE 2) -->
+                <div class="user-tab-pane" id="userPaneRoadmap" style="display: none;">
+                    <!-- Live Readiness Gauge & Roadmap Summary Header -->
+                    <div class="glass-panel" style="padding: 1.5rem; margin-bottom: 1.25rem;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+                            <div>
+                                <div style="font-size: 0.72rem; font-weight: 700; color: #60A5FA; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">
+                                    AI Career Readiness Tracker
+                                </div>
+                                <h3 style="font-size: 1.2rem; font-weight: 800; color: var(--text-primary); margin: 0;">
+                                    Your Personalized Career Readiness Roadmap
+                                </h3>
+                                <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.35rem;" id="roadmapTargetRoleText">
+                                    3-Phase progression formulated directly to bridge identified requirement gaps.
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+                                <button type="button" class="btn btn-secondary" id="btnReassessRoadmap" style="font-size: 0.78rem; padding: 0.45rem 0.9rem;">
+                                    <i data-lucide="refresh-cw" style="width: 13px; height: 13px;"></i> Re-Assess Plan
+                                </button>
+                                <a href="#" id="btnDownloadRoadmapPdf" class="btn btn-primary" style="font-size: 0.78rem; padding: 0.45rem 0.9rem;">
+                                    <i data-lucide="file-down" style="width: 14px; height: 14px;"></i> Export Roadmap (PDF)
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Live Readiness Metrics Bar -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--border-subtle);">
+                            <div>
+                                <div style="font-size: 0.72rem; color: var(--text-muted);">Baseline Match Score</div>
+                                <div style="font-size: 1.4rem; font-weight: 800; color: #94A3B8;" id="roadmapBaselineVal">0%</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.72rem; color: var(--text-muted);">Live Completed Readiness</div>
+                                <div style="font-size: 1.4rem; font-weight: 800; color: var(--color-match);" id="roadmapCurrentReadinessVal">0%</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.72rem; color: var(--text-muted);">Completed Milestones</div>
+                                <div style="font-size: 1.4rem; font-weight: 800; color: #60A5FA;" id="roadmapMilestonesDoneVal">0 / 0</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.72rem; color: var(--text-muted);">Remaining Estimated Hours</div>
+                                <div style="font-size: 1.4rem; font-weight: 800; color: #F59E0B;" id="roadmapHoursVal">0 hrs</div>
+                            </div>
+                        </div>
+
+                        <!-- Dynamic Live Progress Bar -->
+                        <div style="margin-top: 1.15rem;">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.35rem;">
+                                <span>Readiness Progression</span>
+                                <span id="roadmapProgressPctText">0% Complete</span>
+                            </div>
+                            <div style="height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; position: relative;">
+                                <div id="roadmapProgressBarFill" style="height: 100%; width: 0%; background: linear-gradient(90deg, #2563EB, #16A34A); transition: width 0.4s ease;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Anonymized Role Benchmarks Card ($N >= 20 Privacy Rule) -->
+                    <div class="glass-panel" style="padding: 1.25rem 1.5rem; margin-bottom: 1.25rem;" id="roleBenchmarksContainer">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <i data-lucide="bar-chart-3" style="width: 16px; height: 16px; color: #60A5FA;"></i>
+                                <h4 style="font-size: 0.92rem; font-weight: 700; color: var(--text-primary); margin: 0;">
+                                    Anonymized Role Benchmarks
+                                </h4>
+                            </div>
+                            <span style="font-size: 0.7rem; color: var(--text-muted); background: var(--bg-secondary); padding: 0.2rem 0.55rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+                                Privacy Safeguarded (N &ge; 20 Rule)
+                            </span>
+                        </div>
+                        <div id="benchmarkContentArea">
+                            <div style="font-size: 0.78rem; color: var(--text-muted);">Calculating cohort benchmarks...</div>
+                        </div>
+                    </div>
+
+                    <!-- Interactive What-If Simulator -->
+                    <div class="glass-panel" style="padding: 1.25rem 1.5rem; margin-bottom: 1.25rem;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <i data-lucide="sparkles" style="width: 16px; height: 16px; color: #2563EB;"></i>
+                                <h4 style="font-size: 0.92rem; font-weight: 700; color: var(--text-primary); margin: 0;">
+                                    Interactive Simulator: "What if I improve this skill?"
+                                </h4>
+                            </div>
+                            <span style="font-size: 0.72rem; color: var(--text-muted);">
+                                Instant AI readiness projection for target requirements
+                            </span>
+                        </div>
+                        <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; margin-bottom: 0.5rem;">
+                            <select id="selectSimulateSkill" class="search-input" style="flex: 1; min-width: 240px; font-size: 0.8rem; padding: 0.45rem 0.65rem; background: var(--bg-secondary); color: var(--text-primary); border-radius: 4px;">
+                                <option value="">Select a missing skill to simulate...</option>
+                            </select>
+                            <button type="button" class="btn btn-primary" id="btnRunSkillSimulation" style="font-size: 0.78rem; padding: 0.45rem 0.95rem;">
+                                <i data-lucide="play" style="width: 13px; height: 13px;"></i> Project Impact
+                            </button>
+                        </div>
+                        <div id="simulationResultBox" style="display: none; background: rgba(37, 99, 235, 0.08); border: 1px solid rgba(37, 99, 235, 0.25); padding: 0.85rem 1rem; border-radius: var(--radius-sm); margin-top: 0.6rem;">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- 3-Phase Milestone List Container -->
+                    <div id="roadmapPhasesList" style="display: flex; flex-direction: column; gap: 1.25rem;">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="app-footer" style="margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; font-size: 0.75rem; color: var(--text-muted);">
+            <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                <span>Resume Matcher Enterprise : Version 2.5.0</span>
+                <span class="nav-portal-badge" style="background: rgba(37,99,235,0.08); border: 1px solid rgba(37,99,235,0.25); color: #93C5FD; font-size: 0.65rem;">
+                    <i data-lucide="database" style="width: 11px; height: 11px;"></i> SQLite DB: Connected (WAL)
+                </span>
+                <span class="nav-portal-badge" style="background: rgba(22,163,74,0.08); border: 1px solid rgba(22,163,74,0.25); color: #86EFAC; font-size: 0.65rem;">
+                    <i data-lucide="shield-check" style="width: 11px; height: 11px;"></i> Security: Hardened (PBKDF2 / RBAC)
+                </span>
+            </div>
+            <div style="display: flex; gap: 1.5rem;">
+                <a href="/terms" style="color: var(--text-secondary);">Terms and Conditions</a>
+                <a href="/privacy" style="color: var(--text-secondary);">Privacy Policy</a>
+                <a href="#" onclick="openDomainModal(); return false;" style="color: var(--text-secondary);">Custom Domain Settings</a>
+                <a href="/login" style="color: #2563EB;">Assessor Sign In</a>
+            </div>
+        </footer>
+
+    </main>
+
+    <!-- CANDIDATE ANALYSIS DEEP-DIVE MODAL -->
+    <div class="modal-overlay" id="candidateModalOverlay">
+        <div class="modal-card">
+            
+            <div class="modal-header">
+                <div class="modal-header-info">
+                    <div class="candidate-avatar" style="width: 44px; height: 44px; font-size: 1rem;">
+                        <i data-lucide="user" style="width: 22px; height: 22px;"></i>
+                    </div>
+                    <div>
+                        <div class="modal-candidate-name" id="modalCandidateName">Candidate Evaluation</div>
+                        <div class="modal-contact-row">
+                            <span id="modalCandidateEmail"><i data-lucide="mail" style="width: 13px; height: 13px;"></i> Email</span>
+                            <span>:</span>
+                            <span id="modalCandidatePhone"><i data-lucide="phone" style="width: 13px; height: 13px;"></i> Phone</span>
+                            <span>:</span>
+                            <span id="modalCandidateLocation"><i data-lucide="map-pin" style="width: 13px; height: 13px;"></i> Location</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="modal-close-btn" id="closeModalBtn">
+                    <i data-lucide="x" style="width: 18px; height: 18px;"></i>
+                </button>
+            </div>
+
+            <div class="modal-nav-tabs modal-tabs">
+                <button class="modal-tab-btn active" data-target="tabRequirements">Requirement-by-Requirement Evidence</button>
+                <button class="modal-tab-btn" data-target="tabSkillsProfile">Structured Profile and 8 Skill Categories</button>
+                <button class="modal-tab-btn" data-target="tabSummaryRecs">Summary and Improvement Guidance</button>
+                <button class="modal-tab-btn" data-target="tabMockInterview">Targeted Interview Questions</button>
+            </div>
+
+            <div class="modal-body">
+
+                <!-- Score & Category Breakdown Strip -->
+                <div class="candidate-stats-bar">
+                    <div class="overall-score-hero">
+                        <div class="hero-score-ring" id="modalHeroScoreRing">
+                            <span class="hero-score-number" id="modalHeroScoreNumber">82%</span>
+                            <span class="hero-score-label">Fit Score</span>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.92rem; font-weight: 700;">Overall Match Alignment</div>
+                            <div style="font-size: 0.76rem; color: var(--text-secondary); margin-top: 0.2rem;">
+                                Confidence in Analysis: <b id="modalHeroConfidence" style="color: #60A5FA;">91%</b>
+                            </div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted); max-width: 240px; margin-top: 0.2rem;" id="modalConfidenceExplanation">
+                                Evaluated from OCR quality, section completeness, and semantic evidence.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="breakdown-bars-grid" id="modalBreakdownBars"></div>
+                </div>
+
+                <div class="formula-callout" id="modalFormulaText"></div>
+
+                <div class="flags-banner-box" id="modalFlagsBanner"></div>
+
+                <!-- TAB 1: EVIDENCE MATRIX -->
+                <div class="modal-tab-pane" id="tabRequirements" style="display: block;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem;">
+                        <h4 style="font-size: 0.9rem;">Requirement-Level Evidence Verification</h4>
+                        <span style="font-size: 0.72rem; color: var(--text-muted);">Exact Quotes and Semantic Match Rationales</span>
+                    </div>
+                    <div id="modalReqMatrixList"></div>
+                </div>
+
+                <!-- TAB 2: STRUCTURED PROFILE -->
+                <div class="modal-tab-pane" id="tabSkillsProfile" style="display: none;">
+                    <h4 style="font-size: 0.9rem; margin-bottom: 0.75rem;">8 Extracted Skill Categories</h4>
+                    <div class="skills-buckets-grid" id="modalSkillBuckets"></div>
+
+                    <h4 style="font-size: 0.9rem; margin-top: 1.25rem; margin-bottom: 0.5rem;">Academic Qualifications</h4>
+                    <div id="modalEducationList"></div>
+
+                    <h4 style="font-size: 0.9rem; margin-top: 1.25rem; margin-bottom: 0.5rem;">Work History</h4>
+                    <div id="modalExperienceList"></div>
+                </div>
+
+                <!-- TAB 3: SUMMARY & RECS -->
+                <div class="modal-tab-pane" id="tabSummaryRecs" style="display: none;">
+                    <div class="summary-card">
+                        <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;">
+                            Executive Assessment Summary
+                        </div>
+                        <p id="modalExecutiveSummary"></p>
+                    </div>
+
+                    <div class="summary-card">
+                        <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;">
+                            Evidence-Based Resume Improvement Recommendations
+                        </div>
+                        <div style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                            Strictly anchored in actual resume text against job gaps. Zero fabricated claims.
+                        </div>
+                        <div class="recs-list" id="modalRecommendationsList"></div>
+                    </div>
+                </div>
+
+                <!-- TAB 4: MOCK INTERVIEW -->
+                <div class="modal-tab-pane" id="tabMockInterview" style="display: none;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <div>
+                            <h4 style="font-size: 0.9rem;" id="modalInterviewHeading">Targeted Interview Questions (7 to 10 Questions)</h4>
+                            <div style="font-size: 0.74rem; color: var(--text-muted);">Formulated specifically to test verified claims, architectural depth, and probe requirement gaps.</div>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                            <button type="button" class="btn btn-outline-cyan" id="btnOpenScheduleInterviewModal" style="font-size: 0.76rem; padding: 0.35rem 0.75rem;">
+                                <i data-lucide="calendar" style="width: 13px; height: 13px;"></i> Schedule Interview
+                            </button>
+                            <button type="button" class="btn btn-primary" id="btnOpenAiCustomizerModal" style="font-size: 0.76rem; padding: 0.35rem 0.75rem;">
+                                <i data-lucide="sparkles" style="width: 13px; height: 13px;"></i> Customize AI Interview Plan
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="btnToggleAddQuestion" style="font-size: 0.76rem; padding: 0.35rem 0.75rem;">
+                                <i data-lucide="plus-circle" style="width: 13px; height: 13px;"></i> Add Custom Question
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Active Scheduled Interview Status Card -->
+                    <div id="candidateInterviewScheduleBanner" style="display: none; background: rgba(37, 99, 235, 0.08); border: 1px solid rgba(37, 99, 235, 0.3); padding: 0.85rem 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.6rem;">
+                            <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                <div style="background: rgba(37, 99, 235, 0.2); border: 1px solid rgba(37, 99, 235, 0.4); padding: 0.4rem; border-radius: var(--radius-sm); color: #60A5FA;">
+                                    <i data-lucide="video" style="width: 16px; height: 16px;"></i>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+                                        <span>Interview Scheduled</span>
+                                        <span id="bannerInterviewStatusBadge" class="match-pill match" style="font-size: 0.68rem; padding: 0.15rem 0.45rem;">SCHEDULED</span>
+                                    </div>
+                                    <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.15rem;" id="bannerInterviewTimeText">
+                                        Date & Time Loading...
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 0.45rem; align-items: center; flex-wrap: wrap;">
+                                <a href="#" target="_blank" id="bannerBtnJoinMeet" class="btn btn-primary" style="font-size: 0.74rem; padding: 0.3rem 0.65rem;">
+                                    <i data-lucide="video" style="width: 12px; height: 12px;"></i> Join Google Meet
+                                </a>
+                                <button type="button" class="btn btn-secondary" id="bannerBtnSendReminder" style="font-size: 0.74rem; padding: 0.3rem 0.65rem;">
+                                    <i data-lucide="bell" style="width: 12px; height: 12px;"></i> Remind
+                                </button>
+                                <button type="button" class="btn btn-secondary" id="bannerBtnReschedule" style="font-size: 0.74rem; padding: 0.3rem 0.65rem;">
+                                    <i data-lucide="clock" style="width: 12px; height: 12px;"></i> Reschedule
+                                </button>
+                                <button type="button" class="btn btn-outline-cyan" id="bannerBtnFeedback" style="font-size: 0.74rem; padding: 0.3rem 0.65rem;">
+                                    <i data-lucide="file-check" style="width: 12px; height: 12px;"></i> Submit Feedback
+                                </button>
+                                <button type="button" class="btn btn-secondary" id="bannerBtnCancel" style="font-size: 0.74rem; padding: 0.3rem 0.65rem; color: var(--color-gap);">
+                                    <i data-lucide="x" style="width: 12px; height: 12px;"></i> Cancel
+                                </button>
+                            </div>
+                        </div>
+                        <!-- AI Feedback Summary Box -->
+                        <div id="bannerFeedbackSummaryArea" style="display: none; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.08);">
+                            <div style="font-size: 0.75rem; font-weight: 700; color: #93C5FD; text-transform: uppercase; margin-bottom: 0.3rem;">
+                                AI Post-Interview Feedback Summary & Assessor Verdict
+                            </div>
+                            <div id="bannerFeedbackSummaryContent" style="font-size: 0.78rem; line-height: 1.5; color: var(--text-primary); white-space: pre-line; background: rgba(15, 23, 42, 0.6); padding: 0.65rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);"></div>
+                        </div>
+                    </div>
+
+                    <!-- Recruiter Custom Question Builder Box -->
+                    <div id="recruiterQuestionBox" style="display: none; background: var(--bg-tertiary); border: 1px solid var(--border-active); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.25rem;">
+                        <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between;">
+                            <span>Add Recruiter Interview Question</span>
+                            <span style="font-size: 0.7rem; color: var(--text-muted);">Saves directly to candidate dossier and PDF export</span>
+                        </div>
+                        <div style="display: flex; gap: 0.6rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
+                            <input type="text" id="inputCustomQuestionText" placeholder="Enter custom technical or behavioral interview question..." class="search-input" style="flex: 1; min-width: 250px; font-size: 0.82rem; padding: 0.5rem 0.75rem;">
+                            <select id="selectCustomQuestionCategory" class="search-input" style="width: 200px; font-size: 0.78rem; padding: 0.5rem 0.6rem; background: var(--bg-secondary); color: var(--text-primary);">
+                                <option value="Technical Deep-Dive">Technical Deep-Dive</option>
+                                <option value="System Architecture">System Architecture</option>
+                                <option value="Requirement Verification">Requirement Verification</option>
+                                <option value="Domain Competency">Domain Competency</option>
+                                <option value="Behavioral and Leadership">Behavioral and Leadership</option>
+                                <option value="Role-Specific Alignment">Role-Specific Alignment</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+                            <input type="text" id="inputCustomQuestionHint" placeholder="Evaluation criteria or expected response signals (optional)..." class="search-input" style="flex: 1; min-width: 200px; font-size: 0.78rem; padding: 0.45rem 0.75rem;">
+                            <button type="button" class="btn btn-primary" id="btnSubmitCustomQuestion" style="padding: 0.45rem 0.95rem; font-size: 0.78rem;">
+                                <i data-lucide="plus" style="width: 13px; height: 13px;"></i> Add to Dossier
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="interview-cards-grid" id="modalInterviewList"></div>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <div style="font-size: 0.74rem; color: var(--text-muted);">
+                    Evaluation strictly based on job-relevant qualifications. Protected personal attributes excluded.
+                </div>
+                <div style="display: flex; gap: 0.65rem;">
+                    <a href="#" id="modalDossierLink" class="btn btn-outline-cyan">
+                        <i data-lucide="file-down" style="width: 14px; height: 14px;"></i> Export Candidate Dossier (PDF)
+                    </a>
+                    <button class="btn btn-secondary" onclick="closeCandidateModal()">Close</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- HR EMAIL APPLICATION INGESTION MODAL -->
+    <div class="modal-overlay" id="emailIngestModalOverlay">
+        <div class="modal-card" style="max-width: 580px;">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 0.55rem;">
+                    <div style="background: rgba(37, 99, 235, 0.15); border: 1px solid rgba(37, 99, 235, 0.35); padding: 0.4rem; border-radius: var(--radius-sm); color: #2563EB;">
+                        <i data-lucide="mail" style="width: 20px; height: 20px;"></i>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary);">Ingest Application Email</h3>
+                        <div style="font-size: 0.72rem; color: var(--text-muted);">Paste email or attach resume. System auto-extracts candidate coordinates and matches criteria.</div>
+                    </div>
+                </div>
+                <button class="modal-close-btn" id="btnCloseEmailIngestModal">
+                    <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+                </button>
+            </div>
+
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 0.8rem;">
+                <!-- 1-Click Quick Demo Presets -->
+                <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+                    <span style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Load Demo:</span>
+                    <button type="button" class="email-preset-btn" id="presetEmailElena">Elena Vance (Data Scientist)</button>
+                    <button type="button" class="email-preset-btn" id="presetEmailDavid">David Kim (ML Platform)</button>
+                    <button type="button" class="email-preset-btn" id="presetEmailSophie">Sophie Taylor (Analyst)</button>
+                </div>
+
+                <!-- Primary Input: Application Text / Cover Note -->
+                <div>
+                    <label for="emailBodyTextarea" style="display: block; font-size: 0.76rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.3rem;">Application Email or Resume Text</label>
+                    <textarea id="emailBodyTextarea" class="jd-textarea" style="min-height: 140px; font-size: 0.8rem; font-family: var(--font-sans);" placeholder="Paste email body, cover message, or plain text resume here..."></textarea>
+                </div>
+
+                <!-- Attachment Option -->
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; background: var(--bg-secondary); border: 1px dashed var(--border-subtle); border-radius: var(--radius-sm); padding: 0.6rem 0.75rem;">
+                    <div>
+                        <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary);">Attach Resume File (Optional)</div>
+                        <div style="font-size: 0.68rem; color: var(--text-muted);">PDF, DOCX, TXT, or Image (OCR enabled)</div>
+                    </div>
+                    <input type="file" id="emailResumeFileInput" accept=".pdf,.docx,.doc,.txt,.png,.jpg,.jpeg" style="font-size: 0.74rem; max-width: 210px;">
+                </div>
+
+                <!-- Optional Collapsible Overrides -->
+                <details style="border-top: 1px solid var(--border-subtle); padding-top: 0.5rem; font-size: 0.74rem;">
+                    <summary style="cursor: pointer; font-weight: 600; color: var(--text-muted); outline: none;">
+                        Advanced Overrides (Sender / Target Role / Subject)
+                    </summary>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-top: 0.6rem;">
+                        <div>
+                            <label for="emailSenderInput" style="display: block; font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.2rem;">Sender Override</label>
+                            <input type="text" id="emailSenderInput" placeholder="Auto-detected from text" class="search-input" style="padding-left: 0.6rem; border-radius: 4px; font-size: 0.76rem;">
+                        </div>
+                        <div>
+                            <label for="emailJobSelect" style="display: block; font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.2rem;">Target Role</label>
+                            <select id="emailJobSelect" class="search-input" style="padding: 0.4rem 0.5rem; border-radius: 4px; font-size: 0.76rem; background: var(--bg-secondary); color: var(--text-primary);">
+                                <option value="">Auto-Detect from Text/Subject</option>
+                                <option value="senior_ds_genai">Senior Data Scientist - GenAI & MLOps</option>
+                                <option value="ml_platform_lead">ML Platform Engineer</option>
+                                <option value="bi_analytics_lead">BI & Data Analyst</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="margin-top: 0.4rem;">
+                        <label for="emailSubjectInput" style="display: block; font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.2rem;">Subject Line Override</label>
+                        <input type="text" id="emailSubjectInput" placeholder="Auto-detected from text" class="search-input" style="padding-left: 0.6rem; border-radius: 4px; font-size: 0.76rem;">
+                    </div>
+                </details>
+
+                <div id="emailIngestStatus" style="font-size: 0.76rem; display: none;"></div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnCancelEmailIngest">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btnSubmitEmailApplication">
+                    <i data-lucide="check" style="width: 14px; height: 14px;"></i> Ingest & Automatically Analyze
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== EMAIL AUTO-MONITOR SETUP MODAL ===== -->
+    <div class="modal-overlay" id="emailMonitorModalOverlay">
+        <div class="modal-card" style="max-width: 620px;">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 0.55rem;">
+                    <div style="background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.35); padding: 0.4rem; border-radius: var(--radius-sm); color: #22C55E;">
+                        <i data-lucide="mail-check" style="width: 20px; height: 20px;"></i>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary);">HR Email Auto-Monitor</h3>
+                        <div style="font-size: 0.72rem; color: var(--text-muted);">Connect your mailbox — the system polls for resume emails and auto-analyses every attachment.</div>
+                    </div>
+                </div>
+                <button class="modal-close-btn" id="btnCloseEmailMonitorModal">
+                    <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+                </button>
+            </div>
+
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 1rem;">
+
+                <!-- Live status strip -->
+                <div id="emailMonitorStatusBanner" style="display: none; padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); font-size: 0.78rem; font-weight: 600;"></div>
+
+                <!-- IMAP Credentials -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem;">
+                    <div style="grid-column: 1 / -1;">
+                        <label for="emImap" style="display: block; font-size: 0.76rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.3rem;">
+                            <i data-lucide="server" style="width: 12px; height: 12px;"></i> IMAP Server
+                        </label>
+                        <input type="text" id="emImap" class="search-input" style="padding-left: 0.7rem; border-radius: 4px; font-size: 0.8rem;"
+                            placeholder="imap.gmail.com  /  imap.outlook.com  /  mail.yourdomain.com">
+                    </div>
+                    <div>
+                        <label for="emPort" style="display: block; font-size: 0.76rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.3rem;">Port</label>
+                        <input type="number" id="emPort" class="search-input" style="padding-left: 0.7rem; border-radius: 4px; font-size: 0.8rem;" value="993" placeholder="993">
+                    </div>
+                    <div>
+                        <label for="emFolder" style="display: block; font-size: 0.76rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.3rem;">Mailbox Folder</label>
+                        <input type="text" id="emFolder" class="search-input" style="padding-left: 0.7rem; border-radius: 4px; font-size: 0.8rem;" value="INBOX" placeholder="INBOX">
+                    </div>
+                    <div>
+                        <label for="emEmail" style="display: block; font-size: 0.76rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.3rem;">
+                            <i data-lucide="at-sign" style="width: 12px; height: 12px;"></i> HR Email Address
+                        </label>
+                        <input type="email" id="emEmail" class="search-input" style="padding-left: 0.7rem; border-radius: 4px; font-size: 0.8rem;" placeholder="hr@yourcompany.com">
+                    </div>
+                    <div>
+                        <label for="emPassword" style="display: block; font-size: 0.76rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.3rem;">
+                            <i data-lucide="key" style="width: 12px; height: 12px;"></i> App Password / Password
+                        </label>
+                        <input type="password" id="emPassword" class="search-input" style="padding-left: 0.7rem; border-radius: 4px; font-size: 0.8rem;" placeholder="Gmail App Password or IMAP password">
+                    </div>
+                    <div style="grid-column: 1 / -1;">
+                        <label for="emPollInterval" style="display: block; font-size: 0.76rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.3rem;">Poll Interval (minutes)</label>
+                        <input type="number" id="emPollInterval" class="search-input" style="padding-left: 0.7rem; border-radius: 4px; font-size: 0.8rem;" value="5" min="1" max="60">
+                    </div>
+                </div>
+
+                <!-- Gmail hint -->
+                <div style="background: rgba(37, 99, 235, 0.07); border: 1px solid rgba(37, 99, 235, 0.25); border-radius: var(--radius-sm); padding: 0.6rem 0.85rem; font-size: 0.73rem; color: #93C5FD; line-height: 1.5;">
+                    <strong>Gmail users:</strong> Enable 2FA → generate an <em>App Password</em> at myaccount.google.com/apppasswords, use <code>imap.gmail.com:993</code>.<br>
+                    <strong>Outlook/Office365:</strong> Use <code>outlook.office365.com:993</code> with your regular password (or app password if MFA enabled).
+                </div>
+
+                <!-- Recent ingestion log -->
+                <div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <div style="font-size: 0.76rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">Recent Auto-Ingestions</div>
+                        <button type="button" id="btnSyncEmailNow" class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.3rem 0.65rem;" title="Manually trigger mailbox sync now">
+                            <i data-lucide="refresh-cw" style="width: 12px; height: 12px;"></i> Sync Now
+                        </button>
+                    </div>
+                    <div id="emailIngestionLogList" style="max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.75rem;">
+                        <div style="color: var(--text-muted); padding: 0.5rem; text-align: center;">Configure and save to start monitoring.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnCancelEmailMonitor">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btnSaveEmailMonitor">
+                    <i data-lucide="wifi" style="width: 14px; height: 14px;"></i> Connect &amp; Start Monitoring
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CUSTOM DOMAIN SETTINGS MODAL -->
+    <div class="modal-overlay" id="domainModalOverlay">
+        <div class="modal-card" style="max-width: 480px;">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i data-lucide="globe" style="width: 18px; height: 18px; color: #2563EB;"></i>
+                    <h3 style="font-size: 1.05rem;">Custom Domain Configuration</h3>
+                </div>
+                <button class="modal-close-btn" onclick="closeDomainModal()">
+                    <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+                </button>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 1rem;">
+                <p style="font-size: 0.82rem; color: var(--text-secondary);">
+                    Specify your internal enterprise routing hostname or custom domain alias for this candidate matching deployment.
+                </p>
+                <div>
+                    <label for="customDomainInput" style="display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.4rem;">Host Domain</label>
+                    <input type="text" id="customDomainInput" value="matcher.recruitment.internal" class="search-input" style="padding-left: 0.85rem; border-radius: 4px;">
+                </div>
+                <div style="background: rgba(37, 99, 235, 0.08); border: 1px solid rgba(37, 99, 235, 0.3); padding: 0.75rem; border-radius: 4px; font-size: 0.75rem; color: #93C5FD;">
+                    Status: TLS 1.3 Certificate Active : Local DNS resolution enabled.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeDomainModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveDomainConfig()">Save Domain Configuration</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DOCUMENT READABILITY ERROR MODAL -->
+    <div class="modal-overlay" id="errorModalOverlay">
+        <div class="modal-card error-modal">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--color-gap);">
+                    <i data-lucide="alert-octagon" style="width: 20px; height: 20px;"></i>
+                    <h3 style="font-size: 1rem; color: var(--color-gap);">Document Quality Notice</h3>
+                </div>
+                <button class="modal-close-btn" id="closeErrorModalBtn">
+                    <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="errorModalList"></div>
+            </div>
+            <div class="modal-footer" style="justify-content: flex-end;">
+                <button class="btn btn-secondary" onclick="document.getElementById('errorModalOverlay').classList.remove('active')">Acknowledge</button>
+            </div>
+    <!-- AI INTERVIEW QUESTION CUSTOMIZER MODAL -->
+    <div class="modal-overlay" id="aiCustomizerModalOverlay">
+        <div class="modal-card" style="max-width: 580px;">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i data-lucide="sparkles" style="width: 18px; height: 18px; color: #2563EB;"></i>
+                    <h3 style="font-size: 1.05rem;">Customize AI Interview Plan</h3>
+                </div>
+                <button class="modal-close-btn" id="closeAiCustomizerBtn">
+                    <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+                </button>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 1.1rem;">
+                <input type="hidden" id="customizerCandidateId" value="">
+
+                <div style="background: rgba(37, 99, 235, 0.08); border: 1px solid rgba(37, 99, 235, 0.25); border-radius: 4px; padding: 0.65rem 0.85rem;">
+                    <div style="font-size: 0.74rem; color: #93C5FD; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.2rem;">
+                        Built-in AI Auto-Generator
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">
+                        Calibrates targeted interview questions formulated directly around candidate skill gaps, seniority level, and custom technical directives.
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem;">
+                    <div>
+                        <label for="customizerDifficulty" style="display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Seniority / Difficulty Level</label>
+                        <select id="customizerDifficulty" class="search-input" style="padding: 0.5rem 0.65rem; border-radius: 4px; font-size: 0.8rem; background: var(--bg-secondary); color: var(--text-primary);">
+                            <option value="Junior">Junior (Foundational & Syntax)</option>
+                            <option value="Mid">Mid-Level (Production Features)</option>
+                            <option value="Senior" selected>Senior (Architecture & Failover)</option>
+                            <option value="Lead / Staff">Lead / Staff (Distributed Systems)</option>
+                            <option value="Architect">Architect (Enterprise Topologies)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="customizerCount" style="display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Question Volume</label>
+                        <select id="customizerCount" class="search-input" style="padding: 0.5rem 0.65rem; border-radius: 4px; font-size: 0.8rem; background: var(--bg-secondary); color: var(--text-primary);">
+                            <option value="5">5 Questions (Concise Sprint)</option>
+                            <option value="7">7 Questions (Targeted Core)</option>
+                            <option value="10" selected>10 Questions (Standard Comprehensive)</option>
+                            <option value="12">12 Questions (Deep Technical)</option>
+                            <option value="15">15 Questions (Multi-Round Assessment)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="customizerDirectives" style="display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Custom Technical Directives & Focus Areas</label>
+                    <textarea id="customizerDirectives" class="jd-textarea" style="min-height: 85px; font-size: 0.8rem;" placeholder="e.g. Focus specifically on Kubernetes pod autoscaling bottlenecks, zero-downtime database migrations, and PyTorch distributed data parallel."></textarea>
+                </div>
+
+                <div>
+                    <label for="customizerApiKey" style="display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Gemini API Key (Optional)</label>
+                    <input type="password" id="customizerApiKey" placeholder="Leave blank to use Built-in Local AI Engine (Zero External Dependencies)" class="search-input" style="padding-left: 0.75rem; border-radius: 4px; font-size: 0.8rem;">
+                    <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.25rem;">The Built-in Local AI Engine operates autonomously out of the box. Supplying an optional key activates cloud generative models.</div>
+                </div>
+
+                <div id="customizerStatus" style="font-size: 0.76rem; display: none;"></div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnCancelAiCustomizer">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btnSubmitAiCustomizer">
+                    <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i> Synthesize Customized AI Plan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- IN-PLACE QUESTION EDIT MODAL -->
+    <div class="modal-overlay" id="editQuestionModalOverlay">
+        <div class="modal-card" style="max-width: 540px;">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i data-lucide="edit-3" style="width: 18px; height: 18px; color: #2563EB;"></i>
+                    <h3 style="font-size: 1.05rem;">Edit Interview Question</h3>
+                </div>
+                <button class="modal-close-btn" id="closeEditQuestionBtn">
+                    <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+                </button>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 1rem;">
+                <input type="hidden" id="editQuestionId" value="">
+                <input type="hidden" id="editQuestionCandidateId" value="">
+
+                <div>
+                    <label for="editQuestionText" style="display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Question Text</label>
+                    <textarea id="editQuestionText" class="jd-textarea" style="min-height: 90px; font-size: 0.82rem;"></textarea>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem;">
+                    <div>
+                        <label for="editQuestionCategory" style="display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Category</label>
+                        <input type="text" id="editQuestionCategory" class="search-input" style="padding-left: 0.75rem; border-radius: 4px; font-size: 0.8rem;">
+                    </div>
+                    <div>
+                        <label for="editQuestionDifficulty" style="display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Difficulty</label>
+                        <select id="editQuestionDifficulty" class="search-input" style="padding: 0.5rem 0.65rem; border-radius: 4px; font-size: 0.8rem; background: var(--bg-secondary); color: var(--text-primary);">
+                            <option value="Junior">Junior</option>
+                            <option value="Mid">Mid</option>
+                            <option value="Senior">Senior</option>
+                            <option value="Lead / Staff">Lead / Staff</option>
+                            <option value="Architect">Architect</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="editQuestionHint" style="display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Interviewer Evaluation Criteria</label>
+                    <textarea id="editQuestionHint" class="jd-textarea" style="min-height: 65px; font-size: 0.8rem;"></textarea>
+                </div>
+
+                <div>
+                    <label for="editQuestionCoaching" style="display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Candidate Coaching Advice (STAR Guidance)</label>
+                    <textarea id="editQuestionCoaching" class="jd-textarea" style="min-height: 65px; font-size: 0.8rem;"></textarea>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnCancelEditQuestion">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btnSaveEditQuestion">
+                    <i data-lucide="check" style="width: 14px; height: 14px;"></i> Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: SCHEDULE INTERVIEW (GOOGLE CALENDAR / MEET) -->
+    <div class="modal-overlay" id="modalScheduleInterview">
+        <div class="modal-card" style="max-width: 620px;">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                    <div style="background: rgba(37, 99, 235, 0.15); border: 1px solid rgba(37, 99, 235, 0.35); padding: 0.45rem; border-radius: var(--radius-sm); color: #2563EB;">
+                        <i data-lucide="calendar" style="width: 20px; height: 20px;"></i>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin: 0;">Schedule Qualification Interview</h3>
+                        <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 0.15rem;">
+                            Google Calendar OAuth2 & Google Meet Video Integration
+                        </div>
+                    </div>
+                </div>
+                <button class="modal-close-btn" id="closeScheduleInterviewBtn">
+                    <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+                </button>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 1rem;">
+                <input type="hidden" id="scheduleCandidateId" value="">
+
+                <!-- Candidate & Position Banner -->
+                <div style="background: var(--bg-tertiary); border: 1px solid var(--border-subtle); padding: 0.75rem 1rem; border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                    <div>
+                        <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-primary);" id="scheduleCandidateNameDisplay">Candidate Name</div>
+                        <div style="font-size: 0.74rem; color: var(--text-muted);" id="scheduleJobTitleDisplay">Target Role</div>
+                    </div>
+                    <div style="display: flex; gap: 0.4rem; align-items: center;">
+                        <span id="calendarIntegrationBadge" class="match-pill match" style="font-size: 0.68rem; padding: 0.15rem 0.5rem;">
+                            <i data-lucide="check" style="width: 10px; height: 10px;"></i> Google Calendar Connected
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Date & Suggested Slots -->
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                        <label for="scheduleInterviewDate" style="font-size: 0.78rem; font-weight: 600; color: var(--text-secondary);">Interview Date</label>
+                        <span style="font-size: 0.7rem; color: #60A5FA;">1-Click Suggested Slots from Recruiter Calendar</span>
+                    </div>
+                    <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+                        <input type="date" id="scheduleInterviewDate" class="search-input" style="width: 160px; font-size: 0.8rem; padding: 0.45rem 0.65rem; border-radius: 4px;">
+                        <select id="scheduleInterviewDuration" class="search-input" style="width: 120px; font-size: 0.8rem; padding: 0.45rem 0.65rem; border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary);">
+                            <option value="30">30 minutes</option>
+                            <option value="45" selected>45 minutes</option>
+                            <option value="60">60 minutes</option>
+                        </select>
+                        <button type="button" class="btn btn-secondary" id="btnRefreshSlots" style="font-size: 0.74rem; padding: 0.45rem 0.75rem;">
+                            <i data-lucide="rotate-cw" style="width: 12px; height: 12px;"></i> Suggest Slots
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Available Slots Container -->
+                <div>
+                    <div style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 0.35rem;">Available Slots:</div>
+                    <div id="scheduleSlotsList" style="display: flex; gap: 0.45rem; flex-wrap: wrap; min-height: 34px; align-items: center;">
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">Select a date or click Suggest Slots to view available recruiter openings.</span>
+                    </div>
+                </div>
+
+                <input type="hidden" id="scheduleSelectedIso" value="">
+
+                <!-- Video Meeting Link Preview -->
+                <div style="background: rgba(37, 99, 235, 0.08); border: 1px solid rgba(37, 99, 235, 0.25); padding: 0.75rem 1rem; border-radius: var(--radius-sm);">
+                    <div style="font-size: 0.74rem; font-weight: 700; color: #60A5FA; margin-bottom: 0.2rem; display: flex; align-items: center; gap: 0.4rem;">
+                        <i data-lucide="video" style="width: 13px; height: 13px;"></i> Google Meet Auto-Provisioning
+                    </div>
+                    <div style="font-size: 0.78rem; color: var(--text-primary); font-family: monospace;" id="scheduleMeetPreviewText">
+                        https://meet.google.com/will-be-auto-generated
+                    </div>
+                </div>
+
+                <!-- Questions Embedded Notice -->
+                <div style="background: var(--bg-tertiary); border: 1px solid var(--border-subtle); padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); font-size: 0.74rem; color: var(--text-secondary);">
+                    <i data-lucide="info" style="width: 13px; height: 13px; vertical-align: middle; color: #2563EB;"></i>
+                    Candidate-specific AI questions from Tab 4 will be automatically added into the Google Calendar description with recruiter rubrics.
+                </div>
+
+                <!-- Recruiter Notes -->
+                <div>
+                    <label for="scheduleNotes" style="display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Interview Context / Notes (Optional)</label>
+                    <textarea id="scheduleNotes" class="jd-textarea" placeholder="Add specific technical focus or team interviewers..." style="min-height: 55px; font-size: 0.8rem;"></textarea>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnCancelScheduleInterview">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btnConfirmScheduleInterview">
+                    <i data-lucide="calendar-check" style="width: 14px; height: 14px;"></i> Confirm & Schedule Interview
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: SUBMIT INTERVIEW FEEDBACK & AI SUMMARY -->
+    <div class="modal-overlay" id="modalInterviewFeedback">
+        <div class="modal-card" style="max-width: 580px;">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                    <div style="background: rgba(22, 163, 74, 0.15); border: 1px solid rgba(22, 163, 74, 0.35); padding: 0.45rem; border-radius: var(--radius-sm); color: var(--color-match);">
+                        <i data-lucide="file-check" style="width: 20px; height: 20px;"></i>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin: 0;">Submit Interview Evaluation & Feedback</h3>
+                        <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 0.15rem;">
+                            Record assessor observations and generate AI hiring summary
+                        </div>
+                    </div>
+                </div>
+                <button class="modal-close-btn" id="closeFeedbackModalBtn">
+                    <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+                </button>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 1rem;">
+                <input type="hidden" id="feedbackInterviewId" value="">
+
+                <div>
+                    <label for="feedbackRatingSelect" style="display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Assessor Numerical Rating</label>
+                    <select id="feedbackRatingSelect" class="search-input" style="padding: 0.5rem 0.75rem; border-radius: 4px; font-size: 0.82rem; background: var(--bg-secondary); color: var(--text-primary);">
+                        <option value="5.0">5.0 - Strong Hire (Exceeds Senior Architectural Thresholds)</option>
+                        <option value="4.0" selected>4.0 - Hire (Satisfies Core Production Requirements)</option>
+                        <option value="3.0">3.0 - Leaning Hire (Requires Targeted Skill Ramp-Up)</option>
+                        <option value="2.0">2.0 - Leaning No Hire (Critical Must-Have Gaps Unresolved)</option>
+                        <option value="1.0">1.0 - Strong No Hire (Failed Core Technical Evaluation)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="feedbackNotesText" style="display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Interviewer Notes & Observations</label>
+                    <textarea id="feedbackNotesText" class="jd-textarea" placeholder="Detail candidate's responses on system trade-offs, production tools, problem-solving, and communication..." style="min-height: 100px; font-size: 0.82rem;"></textarea>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnCancelFeedback">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btnSubmitFeedbackConfirm">
+                    <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i> Submit & Formulate AI Summary
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Controller Context -->
+    <script>
+        window.INITIAL_APP_MODE = "{{ initial_mode }}";
+        window.USER_SESSION = {
+            name: "{{ user.name if user else 'Assessor' }}",
+            role: "{{ user.role if user else 'Assessor' }}",
+            email: "{{ user.email if user else '' }}",
+            user_type: "{{ user.user_type if user else 'hr' }}"
+        };
+    </script>
+    <script src="/static/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof refreshIcons === 'function') refreshIcons();
+            else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

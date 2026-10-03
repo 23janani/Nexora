@@ -1,0 +1,19 @@
+Dr. Elena Vance, Ph.D.
+Email: elena.vance@alum.stanford.edu | Phone: (415) 555-0194 | Location: San Francisco, CA
+
+PROFESSIONAL SUMMARY
+Senior Data Scientist with 6+ years of specialized experience architecting predictive machine learning pipelines, LLM solutions, and cloud-native MLOps architectures. Proven track record deploying models serving 5M+ daily requests on AWS with high reliability and low latency.
+
+EDUCATION
+Ph.D. in Computer Science (Machine Learning Specialization), Stanford University, 2018
+Master of Science in Statistics, Stanford University, 2015
+
+WORK EXPERIENCE
+Staff Data Scientist | Apex Machine Intelligence, San Francisco, CA (2021 – Present)
+• Spearheaded predictive models using scikit-learn, XGBoost, and PyTorch for customer risk scoring, lifting prediction accuracy by 24%.
+• Architected end-to-end cloud deployment pipelines utilizing AWS EC2, S3, and SageMaker with Docker containerization.
+• Designed automated MLOps CI/CD pipelines incorporating MLflow and Kubernetes.
+• Wrote high-performance PostgreSQL and Snowflake queries for real-time feature store ingestion.
+
+TECHNICAL SKILLS
+Python, SQL, PyTorch, Scikit-learn, Pandas, NumPy, AWS, Docker, Kubernetes, PostgreSQL

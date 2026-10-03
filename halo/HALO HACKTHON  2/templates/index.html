@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume-JD Match Portal : Candidate Requirement Analysis</title>
+    <meta name="description" content="Enterprise resume and job description semantic matching system. Automated parsing, requirement comparison, and candidate qualification verification.">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    
+    <!-- Design Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+    <!-- TOP NAVIGATION & ENTERPRISE HEADER -->
+    <nav class="top-navbar">
+        <div class="brand-container">
+            <div class="brand-logo">
+                <i data-lucide="layers" style="width: 20px; height: 20px;"></i>
+            </div>
+            <div>
+                <div class="brand-title">
+                    Resume Matcher <span style="color: #2563EB;">Enterprise</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="navbar-center">
+            <div class="active-jd-pill" id="activeJdPill">
+                <span class="pulse-dot"></span>
+                <span style="font-weight: 600;">Active Target:</span>
+                <span id="activeJdTitle" style="color: var(--text-primary); font-weight: 700;">Senior Data Scientist - GenAI & MLOps</span>
+                <span id="activeJdReqCount" style="color: var(--text-muted); font-size: 0.74rem;">(7 Required : 4 Preferred)</span>
+            </div>
+        </div>
+
+        <div class="navbar-actions">
+            <!-- Custom Domain Indicator -->
+            <button class="btn btn-secondary" id="domainConfigBtn" style="font-size: 0.76rem;" title="Configure enterprise custom domain">
+                <i data-lucide="globe" style="width: 14px; height: 14px;"></i>
+                <span id="navDomainDisplay">{{ custom_domain }}</span>
+            </button>
+
+            <!-- Reset / Sample Batch -->
+            <button class="btn btn-primary" id="loadDemoBatchBtn" title="Load standardized candidate dataset">
+                <i data-lucide="database" style="width: 14px; height: 14px;"></i> Load Standard Dataset
+            </button>
+
+            <!-- Assessor Profile & Navigation -->
+            <div style="display: flex; align-items: center; gap: 0.5rem; padding-left: 0.5rem; border-left: 1px solid var(--border-subtle);">
+                <a href="/login" class="btn btn-secondary" style="font-size: 0.76rem;" title="Switch Assessor Session">
+                    <i data-lucide="user" style="width: 13px; height: 13px;"></i>
+                    <span>{{ user.name if user else 'Assessor' }}</span>
+                </a>
+                <button class="theme-toggle-btn" id="themeToggleBtn" title="Toggle Light/Dark Theme">
+                    <i data-lucide="sun" id="themeIcon" style="width: 16px; height: 16px;"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN DASHBOARD CONTENT -->
+    <main class="main-content">
+
+        <!-- VERIFIABLE RECRUITER METRICS STRIP -->
+        <section class="kpi-grid">
+            <div class="glass-panel kpi-card kpi-info">
+                <div>
+                    <div class="kpi-label">Active Candidate Pool</div>
+                    <div class="kpi-value" id="statProcessedToday">7</div>
+                    <div class="kpi-subtext">Verified resumes in current workspace</div>
+                </div>
+                <div class="kpi-icon-box">
+                    <i data-lucide="file-text" style="width: 20px; height: 20px;"></i>
+                </div>
+            </div>
+
+            <div class="glass-panel kpi-card kpi-match">
+                <div>
+                    <div class="kpi-label">High-Match Candidates (>=80%)</div>
+                    <div class="kpi-value" id="statHighMatches" style="color: var(--color-match);">3</div>
+                    <div class="kpi-subtext">Meeting primary requirements</div>
+                </div>
+                <div class="kpi-icon-box">
+                    <i data-lucide="check-circle-2" style="width: 20px; height: 20px; color: var(--color-match);"></i>
+                </div>
+            </div>
+
+            <div class="glass-panel kpi-card">
+                <div>
+                    <div class="kpi-label">Average Fit Score</div>
+                    <div class="kpi-value" id="statAvgFit">63%</div>
+                    <div class="kpi-subtext">Weighted qualification match</div>
+                </div>
+                <div class="kpi-icon-box">
+                    <i data-lucide="activity" style="width: 20px; height: 20px;"></i>
+                </div>
+            </div>
+
+            <div class="glass-panel kpi-card kpi-warning">
+                <div>
+                    <div class="kpi-label">Review Flags</div>
+                    <div class="kpi-value" id="statReviewFlags" style="color: var(--color-flag);">3</div>
+                    <div class="kpi-subtext">Candidates requiring manual verification</div>
+                </div>
+                <div class="kpi-icon-box">
+                    <i data-lucide="alert-triangle" style="width: 20px; height: 20px; color: var(--color-flag);"></i>
+                </div>
+            </div>
+
+            <div class="glass-panel kpi-card">
+                <div>
+                    <div class="kpi-label">Duplicate Resumes</div>
+                    <div class="kpi-value" id="statDuplicates">1</div>
+                    <div class="kpi-subtext">Identified via content overlap</div>
+                </div>
+                <div class="kpi-icon-box">
+                    <i data-lucide="copy" style="width: 20px; height: 20px;"></i>
+                </div>
+            </div>
+
+            <div class="glass-panel kpi-card kpi-slate">
+                <div>
+                    <div class="kpi-label">AI Content Signals</div>
+                    <div class="kpi-value" id="statAiSignals">1</div>
+                    <div class="kpi-subtext">Informational review signal only</div>
+                </div>
+                <div class="kpi-icon-box">
+                    <i data-lucide="file-search" style="width: 20px; height: 20px;"></i>
+                </div>
+            </div>
+        </section>
+
+        <!-- DUAL-PANE WORKSPACE: RESUME UPLOAD + JD STUDIO -->
+        <section class="workspace-grid">
+            
+            <!-- PANE A: RESUME INPUT -->
+            <div class="glass-panel">
+                <div class="section-header">
+                    <div class="section-title">
+                        <i data-lucide="upload-cloud" style="color: var(--color-accent); width: 18px; height: 18px;"></i>
+                        <span>Resume Ingestion and Processing</span>
+                    </div>
+                    <span style="font-size: 0.72rem; color: var(--text-muted);">PDF, DOCX, DOC, TXT, PNG, JPG (OCR)</span>
+                </div>
+                <div class="section-body">
+                    <!-- Dropzone -->
+                    <div class="dropzone" id="resumeDropzone">
+                        <div class="dropzone-icon">
+                            <i data-lucide="upload-cloud" style="width: 28px; height: 28px;"></i>
+                        </div>
+                        <div class="dropzone-title">Upload Multiple Resumes for Automated Processing</div>
+                        <div class="dropzone-desc">Drag and drop single or multiple candidate resumes (support for 1 to 50+ files in one batch). Native OCR executes for scanned image and PDF formats.</div>
+                        <div class="dropzone-formats">
+                            <span class="format-badge">PDF</span>
+                            <span class="format-badge">DOCX</span>
+                            <span class="format-badge">DOC</span>
+                            <span class="format-badge">TXT</span>
+                            <span class="format-badge">PNG</span>
+                            <span class="format-badge">JPG</span>
+                        </div>
+                        <div style="margin-top: 0.85rem; display: flex; gap: 0.6rem; justify-content: center; flex-wrap: wrap;">
+                            <button type="button" class="btn btn-primary" id="btnSelectMultipleFiles" style="padding: 0.4rem 0.85rem; font-size: 0.78rem;">
+                                <i data-lucide="files" style="width: 14px; height: 14px;"></i> Select Multiple Resumes
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="btnLoadBatchSample" style="padding: 0.4rem 0.85rem; font-size: 0.78rem;">
+                                <i data-lucide="layers" style="width: 14px; height: 14px;"></i> Load Standard Batch
+                            </button>
+                        </div>
+                        <input type="file" id="resumeFileInput" multiple accept=".pdf,.docx,.doc,.txt,.png,.jpg,.jpeg" style="display: none;">
+                    </div>
+
+                    <div class="upload-queue-container" id="uploadQueueList"></div>
+
+                    <div style="margin-top: 0.85rem; font-size: 0.74rem; color: var(--text-muted);">
+                        Ready-to-test files are available in the local directory: <code>sample_files/</code>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANE B: JOB DESCRIPTION INPUT -->
+            <div class="glass-panel">
+                <div class="section-header">
+                    <div class="section-title">
+                        <i data-lucide="briefcase" style="color: #2563EB; width: 18px; height: 18px;"></i>
+                        <span>Job Description Criteria</span>
+                    </div>
+                    <span style="font-size: 0.72rem; color: var(--text-muted);">NLP Requirement Parser</span>
+                </div>
+                <div class="section-body">
+                    <div class="jd-tabs">
+                        <button class="jd-tab-btn active" id="jdTabPaste">Paste Text Requirements</button>
+                        <button class="jd-tab-btn" id="jdTabFile">Upload JD Document</button>
+                    </div>
+
+                    <div id="jdTextSection">
+                        <textarea class="jd-textarea" id="jdTextarea" placeholder="Enter complete job requirements: must-have technical qualifications, preferred background, and duties..."></textarea>
+                    </div>
+
+                    <div id="jdFileSection" style="display: none;">
+                        <div style="border: 1px dashed var(--border-subtle); padding: 2rem; border-radius: var(--radius-md); text-align: center;">
+                            <input type="file" id="jdFileInput" accept=".pdf,.docx,.doc,.txt,.png,.jpg">
+                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">Supports PDF, Word DOCX, TXT, or Image files.</div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 0.75rem;">
+                        <div class="jd-presets-bar">
+                            <span style="font-size: 0.72rem; color: var(--text-muted);">Role Presets:</span>
+                            <span class="preset-chip" data-preset="senior_ds">Senior Data Scientist</span>
+                            <span class="preset-chip" data-preset="ml_infra">ML Platform Engineer</span>
+                            <span class="preset-chip" data-preset="analyst">BI and Data Analyst</span>
+                        </div>
+                        <button class="btn btn-primary" id="processJdBtn" style="padding: 0.45rem 0.9rem;">
+                            <i data-lucide="refresh-cw" style="width: 13px; height: 13px;"></i> Update Target Criteria
+                        </button>
+                    </div>
+
+                    <div id="jdStatusMsg" style="margin-top: 0.65rem; font-size: 0.75rem;"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- IMMEDIATE FIT SCORE & ASSESSMENT REPORT BANNER -->
+        <section id="immediateReportSection" class="glass-panel" style="display: none; margin-bottom: 1.5rem; border: 1px solid var(--border-active); background: var(--bg-card); position: relative;">
+            <div class="section-header" style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+                    <span class="flag-badge flag-clean" style="font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Latest Upload Evaluation</span>
+                    <span id="immediateCandidateName" style="font-weight: 700; font-size: 1.05rem; color: var(--text-primary);">Candidate Assessment</span>
+                    <span id="immediateFilename" style="font-size: 0.76rem; color: var(--text-muted); font-family: var(--font-mono);">filename.pdf</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <button class="btn btn-primary" id="immediateOpenModalBtn" style="padding: 0.35rem 0.85rem; font-size: 0.78rem;">
+                        <i data-lucide="scan-eye" style="width: 14px; height: 14px;"></i> View Full Assessment Dossier
+                    </button>
+                    <a id="immediateDossierLink" href="#" class="btn btn-secondary" style="padding: 0.35rem 0.8rem; font-size: 0.78rem;">
+                        <i data-lucide="download" style="width: 14px; height: 14px;"></i> Download PDF Dossier
+                    </a>
+                    <button class="btn btn-secondary" id="immediateDismissBtn" style="padding: 0.35rem 0.6rem; font-size: 0.78rem;" title="Dismiss banner">
+                        <i data-lucide="x" style="width: 14px; height: 14px;"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Batch Ingestion Navigation Bar -->
+            <div id="immediateBatchNav" style="display: none; padding: 0.6rem 0.85rem; background: rgba(0,0,0,0.2); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); margin-bottom: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.6rem;">
+                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                    <span class="flag-badge flag-clean" id="immediateBatchCountBadge">Batch Ingestion (0 Resumes)</span>
+                    <span style="font-size: 0.74rem; color: var(--text-secondary);">Select candidate below to inspect fit score and dossier:</span>
+                </div>
+                <div id="immediateBatchChips" style="display: flex; gap: 0.4rem; flex-wrap: wrap;"></div>
+            </div>
+
+            <div class="immediate-report-grid">
+                <!-- Score Card Left -->
+                <div class="immediate-score-col">
+                    <div class="immediate-score-box" id="immediateScoreBox">
+                        <div class="immediate-score-number" id="immediateScoreNumber">0%</div>
+                        <div class="immediate-score-label">OVERALL FIT SCORE</div>
+                    </div>
+                    <div class="immediate-conf-box">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
+                            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Analysis Confidence</span>
+                            <span id="immediateConfidenceVal" style="font-weight: 700; color: #60A5FA; font-size: 0.85rem;">0%</span>
+                        </div>
+                        <div id="immediateConfidenceText" style="font-size: 0.7rem; color: var(--text-muted); line-height: 1.35;">High Document Fidelity</div>
+                    </div>
+                    <div class="matches-pill-group" style="margin-top: 0.75rem; justify-content: center;">
+                        <span class="pill-count pill-match" id="immediateMatchCount">MATCH: 0</span>
+                        <span class="pill-count pill-partial" id="immediatePartialCount">PARTIAL: 0</span>
+                        <span class="pill-count pill-gap" id="immediateGapCount">GAP: 0</span>
+                    </div>
+                </div>
+
+                <!-- Executive Summary & Highlights Right -->
+                <div class="immediate-details-col">
+                    <div style="margin-bottom: 0.75rem;">
+                        <div style="font-size: 0.74rem; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 0.35rem; letter-spacing: 0.5px;">
+                            Executive Assessment Summary
+                        </div>
+                        <div id="immediateSummaryText" style="font-size: 0.84rem; color: var(--text-primary); line-height: 1.5; background: var(--bg-tertiary); padding: 0.75rem 0.9rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                            Analysis summary will be rendered here.
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                        <div>
+                            <div style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--color-match); margin-bottom: 0.3rem; letter-spacing: 0.5px;">
+                                [MATCH] Verified Strengths
+                            </div>
+                            <div id="immediateMatchesList" style="display: flex; flex-direction: column; gap: 0.3rem;"></div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--color-gap); margin-bottom: 0.3rem; letter-spacing: 0.5px;">
+                                [GAP] Critical Missing Criteria
+                            </div>
+                            <div id="immediateGapsList" style="display: flex; flex-direction: column; gap: 0.3rem;"></div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 0.75rem; padding-top: 0.6rem; border-top: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted); flex-wrap: wrap; gap: 0.5rem;">
+                        <div id="immediateFormulaText">
+                            <b>Formula:</b> (Must-Have 70%) + (Nice-to-Have 30%)
+                        </div>
+                        <div>
+                            Candidate added to live evaluation pool below
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CANDIDATES ANALYTICS TABLE -->
+        <section class="glass-panel">
+            <div class="table-controls">
+                <div style="display: flex; align-items: center; gap: 0.85rem; flex-wrap: wrap;">
+                    <div class="search-input-wrapper">
+                        <i data-lucide="search" class="search-icon" style="width: 15px; height: 15px;"></i>
+                        <input type="text" class="search-input" id="candidateSearch" placeholder="Filter by candidate name, skill, or keyword...">
+                    </div>
+                    <div class="filter-pills">
+                        <button class="filter-pill active" data-filter="all">All Candidates</button>
+                        <button class="filter-pill" data-filter="high_match">High Match (>=80%)</button>
+                        <button class="filter-pill" data-filter="mid_match">Mid Match (50-79%)</button>
+                        <button class="filter-pill" data-filter="clean">Verified Clean</button>
+                        <button class="filter-pill" data-filter="flagged">Needs Review</button>
+                        <button class="filter-pill" data-filter="duplicate">Duplicates</button>
+                        <button class="filter-pill" data-filter="ai_signal">AI Content Signals</button>
+                        <button class="filter-pill" data-filter="repeated">Repeated Text</button>
+                    </div>
+                </div>
+                <div id="tableCandidateCount" style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">
+                    Loading candidate pool...
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable('name')">Candidate Profile ↕</th>
+                            <th onclick="sortTable('fit_score')">Overall Fit Score ↕</th>
+                            <th onclick="sortTable('confidence')">Analysis Confidence ↕</th>
+                            <th>Requirement Breakdown</th>
+                            <th>Integrity Signals</th>
+                            <th>Status</th>
+                            <th style="text-align: right;">Evaluation</th>
+                        </tr>
+                    </thead>
+                    <tbody id="candidatesTableBody">
+                        <!-- Dynamic Candidate Rows -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- FOOTER WITH GOVERNANCE LINKS -->
+        <footer style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border-subtle); padding-top: 1.25rem; font-size: 0.76rem; color: var(--text-muted); margin-top: 1rem; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                Resume-Job Description Matching System : Version 2.4.0
+            </div>
+            <div style="display: flex; gap: 1.5rem;">
+                <a href="/terms" style="color: var(--text-secondary);">Terms and Conditions</a>
+                <a href="/privacy" style="color: var(--text-secondary);">Privacy Policy</a>
+                <a href="#" onclick="openDomainModal(); return false;" style="color: var(--text-secondary);">Custom Domain Settings</a>
+                <a href="/login" style="color: #2563EB;">Assessor Sign In</a>
+            </div>
+        </footer>
+
+    </main>
+
+    <!-- CANDIDATE ANALYSIS DEEP-DIVE MODAL -->
+    <div class="modal-overlay" id="candidateModalOverlay">
+        <div class="modal-card">
+            
+            <div class="modal-header">
+                <div class="modal-header-info">
+                    <div class="candidate-avatar" style="width: 44px; height: 44px; font-size: 1rem;">
+                        <i data-lucide="user" style="width: 22px; height: 22px;"></i>
+                    </div>
+                    <div>
+                        <div class="modal-candidate-name" id="modalCandidateName">Candidate Evaluation</div>
+                        <div class="modal-contact-row">
+                            <span id="modalCandidateEmail"><i data-lucide="mail" style="width: 13px; height: 13px;"></i> Email</span>
+                            <span>:</span>
+                            <span id="modalCandidatePhone"><i data-lucide="phone" style="width: 13px; height: 13px;"></i> Phone</span>
+                            <span>:</span>
+                            <span id="modalCandidateLocation"><i data-lucide="map-pin" style="width: 13px; height: 13px;"></i> Location</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="modal-close-btn" id="closeModalBtn">
+                    <i data-lucide="x" style="width: 18px; height: 18px;"></i>
+                </button>
+            </div>
+
+            <div class="modal-nav-tabs">
+                <button class="modal-tab-btn active" data-target="tabRequirements">Requirement-by-Requirement Evidence</button>
+                <button class="modal-tab-btn" data-target="tabSkillsProfile">Structured Profile and 8 Skill Categories</button>
+                <button class="modal-tab-btn" data-target="tabSummaryRecs">Summary and Improvement Guidance</button>
+                <button class="modal-tab-btn" data-target="tabMockInterview">Targeted Interview Questions</button>
+            </div>
+
+            <div class="modal-body">
+
+                <!-- Score & Category Breakdown Strip -->
+                <div class="candidate-stats-bar">
+                    <div class="overall-score-hero">
+                        <div class="hero-score-ring" id="modalHeroScoreRing">
+                            <span class="hero-score-number" id="modalHeroScoreNumber">82%</span>
+                            <span class="hero-score-label">Fit Score</span>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.92rem; font-weight: 700;">Overall Match Alignment</div>
+                            <div style="font-size: 0.76rem; color: var(--text-secondary); margin-top: 0.2rem;">
+                                Confidence in Analysis: <b id="modalHeroConfidence" style="color: #60A5FA;">91%</b>
+                            </div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted); max-width: 240px; margin-top: 0.2rem;" id="modalConfidenceExplanation">
+                                Evaluated from OCR quality, section completeness, and semantic evidence.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="breakdown-bars-grid" id="modalBreakdownBars"></div>
+                </div>
+
+                <div class="formula-callout" id="modalFormulaText"></div>
+
+                <div class="flags-banner-box" id="modalFlagsBanner"></div>
+
+                <!-- TAB 1: EVIDENCE MATRIX -->
+                <div class="modal-tab-pane" id="tabRequirements" style="display: block;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem;">
+                        <h4 style="font-size: 0.9rem;">Requirement-Level Evidence Verification</h4>
+                        <span style="font-size: 0.72rem; color: var(--text-muted);">Exact Quotes and Semantic Match Rationales</span>
+                    </div>
+                    <div id="modalReqMatrixList"></div>
+                </div>
+
+                <!-- TAB 2: STRUCTURED PROFILE -->
+                <div class="modal-tab-pane" id="tabSkillsProfile" style="display: none;">
+                    <h4 style="font-size: 0.9rem; margin-bottom: 0.75rem;">8 Extracted Skill Categories</h4>
+                    <div class="skills-buckets-grid" id="modalSkillBuckets"></div>
+
+                    <h4 style="font-size: 0.9rem; margin-top: 1.25rem; margin-bottom: 0.5rem;">Academic Qualifications</h4>
+                    <div id="modalEducationList"></div>
+
+                    <h4 style="font-size: 0.9rem; margin-top: 1.25rem; margin-bottom: 0.5rem;">Work History</h4>
+                    <div id="modalExperienceList"></div>
+                </div>
+
+                <!-- TAB 3: SUMMARY & RECS -->
+                <div class="modal-tab-pane" id="tabSummaryRecs" style="display: none;">
+                    <div class="summary-card">
+                        <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;">
+                            Executive Assessment Summary
+                        </div>
+                        <p id="modalExecutiveSummary"></p>
+                    </div>
+
+                    <div class="summary-card">
+                        <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;">
+                            Evidence-Based Resume Improvement Recommendations
+                        </div>
+                        <div style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                            Strictly anchored in actual resume text against job gaps. Zero fabricated claims.
+                        </div>
+                        <div class="recs-list" id="modalRecommendationsList"></div>
+                    </div>
+                </div>
+
+                <!-- TAB 4: MOCK INTERVIEW -->
+                <div class="modal-tab-pane" id="tabMockInterview" style="display: none;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <div>
+                            <h4 style="font-size: 0.9rem;" id="modalInterviewHeading">Targeted Interview Questions (7 to 10 Questions)</h4>
+                            <div style="font-size: 0.74rem; color: var(--text-muted);">Formulated specifically to test verified claims, architectural depth, and probe requirement gaps.</div>
+                        </div>
+                        <button type="button" class="btn btn-secondary" id="btnToggleAddQuestion" style="font-size: 0.76rem; padding: 0.35rem 0.75rem;">
+                            <i data-lucide="plus-circle" style="width: 14px; height: 14px;"></i> Add Custom Question
+                        </button>
+                    </div>
+
+                    <!-- Recruiter Custom Question Builder Box -->
+                    <div id="recruiterQuestionBox" style="display: none; background: var(--bg-tertiary); border: 1px solid var(--border-active); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.25rem;">
+                        <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between;">
+                            <span>Add Recruiter Interview Question</span>
+                            <span style="font-size: 0.7rem; color: var(--text-muted);">Saves directly to candidate dossier and PDF export</span>
+                        </div>
+                        <div style="display: flex; gap: 0.6rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
+                            <input type="text" id="inputCustomQuestionText" placeholder="Enter custom technical or behavioral interview question..." class="search-input" style="flex: 1; min-width: 250px; font-size: 0.82rem; padding: 0.5rem 0.75rem;">
+                            <select id="selectCustomQuestionCategory" class="search-input" style="width: 200px; font-size: 0.78rem; padding: 0.5rem 0.6rem; background: var(--bg-secondary); color: var(--text-primary);">
+                                <option value="Technical Deep-Dive">Technical Deep-Dive</option>
+                                <option value="System Architecture">System Architecture</option>
+                                <option value="Requirement Verification">Requirement Verification</option>
+                                <option value="Domain Competency">Domain Competency</option>
+                                <option value="Behavioral and Leadership">Behavioral and Leadership</option>
+                                <option value="Role-Specific Alignment">Role-Specific Alignment</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+                            <input type="text" id="inputCustomQuestionHint" placeholder="Evaluation criteria or expected response signals (optional)..." class="search-input" style="flex: 1; min-width: 200px; font-size: 0.78rem; padding: 0.45rem 0.75rem;">
+                            <button type="button" class="btn btn-primary" id="btnSubmitCustomQuestion" style="padding: 0.45rem 0.95rem; font-size: 0.78rem;">
+                                <i data-lucide="plus" style="width: 13px; height: 13px;"></i> Add to Dossier
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="interview-cards-grid" id="modalInterviewList"></div>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <div style="font-size: 0.74rem; color: var(--text-muted);">
+                    Evaluation strictly based on job-relevant qualifications. Protected personal attributes excluded.
+                </div>
+                <div style="display: flex; gap: 0.65rem;">
+                    <a href="#" id="modalDossierLink" class="btn btn-outline-cyan">
+                        <i data-lucide="file-down" style="width: 14px; height: 14px;"></i> Export Candidate Dossier (PDF)
+                    </a>
+                    <button class="btn btn-secondary" onclick="closeCandidateModal()">Close</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- CUSTOM DOMAIN SETTINGS MODAL -->
+    <div class="modal-overlay" id="domainModalOverlay">
+        <div class="modal-card" style="max-width: 480px;">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i data-lucide="globe" style="width: 18px; height: 18px; color: #2563EB;"></i>
+                    <h3 style="font-size: 1.05rem;">Custom Domain Configuration</h3>
+                </div>
+                <button class="modal-close-btn" onclick="closeDomainModal()">
+                    <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+                </button>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 1rem;">
+                <p style="font-size: 0.82rem; color: var(--text-secondary);">
+                    Specify your internal enterprise routing hostname or custom domain alias for this candidate matching deployment.
+                </p>
+                <div>
+                    <label for="customDomainInput" style="display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.4rem;">Host Domain</label>
+                    <input type="text" id="customDomainInput" value="matcher.recruitment.internal" class="search-input" style="padding-left: 0.85rem; border-radius: 4px;">
+                </div>
+                <div style="background: rgba(37, 99, 235, 0.08); border: 1px solid rgba(37, 99, 235, 0.3); padding: 0.75rem; border-radius: 4px; font-size: 0.75rem; color: #93C5FD;">
+                    Status: TLS 1.3 Certificate Active : Local DNS resolution enabled.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeDomainModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveDomainConfig()">Save Domain Configuration</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DOCUMENT READABILITY ERROR MODAL -->
+    <div class="modal-overlay" id="errorModalOverlay">
+        <div class="modal-card error-modal">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--color-gap);">
+                    <i data-lucide="alert-octagon" style="width: 20px; height: 20px;"></i>
+                    <h3 style="font-size: 1rem; color: var(--color-gap);">Document Quality Notice</h3>
+                </div>
+                <button class="modal-close-btn" id="closeErrorModalBtn">
+                    <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="errorModalList"></div>
+            </div>
+            <div class="modal-footer" style="justify-content: flex-end;">
+                <button class="btn btn-secondary" onclick="document.getElementById('errorModalOverlay').classList.remove('active')">Acknowledge</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Controller -->
+    <script src="/static/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

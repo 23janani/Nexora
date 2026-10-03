@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise Portal Authentication : Resume Matcher</title>
+    <meta name="description" content="Dedicated portal sign in for enterprise technical recruiters and job candidate self-assessment.">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body style="display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem 1.5rem; background: var(--bg-primary);">
+
+    <div class="glass-panel" style="width: 100%; max-width: 520px; padding: 2.25rem 2rem; border-radius: 6px; box-shadow: var(--shadow-lg);">
+        
+        <!-- Brand Header -->
+        <div style="text-align: center; margin-bottom: 1.75rem;">
+            <div style="width: 44px; height: 44px; background: #2563EB; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; color: #FFF; margin-bottom: 0.85rem;">
+                <i data-lucide="layers" style="width: 24px; height: 24px;"></i>
+            </div>
+            <h1 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.35rem; letter-spacing: -0.01em;">
+                Enterprise Assessor Sign In
+            </h1>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">
+                Select your designated access portal (HR or Candidate) to sign in
+            </p>
+        </div>
+
+        <!-- Portal Role Selector Tabs -->
+        <div class="mode-switcher-group" style="display: grid; grid-template-columns: 1fr 1fr; margin-bottom: 1.75rem; padding: 3px;">
+            <button type="button" class="mode-tab-btn {{ 'active' if active_portal != 'candidate' else '' }}" id="tabBtnHr" style="justify-content: center; padding: 0.55rem; font-size: 0.8rem;">
+                <i data-lucide="briefcase" style="width: 15px; height: 15px;"></i>
+                <span>HR / Recruiter Portal</span>
+            </button>
+            <button type="button" class="mode-tab-btn {{ 'active' if active_portal == 'candidate' else '' }}" id="tabBtnCandidate" style="justify-content: center; padding: 0.55rem; font-size: 0.8rem;">
+                <i data-lucide="user-check" style="width: 15px; height: 15px;"></i>
+                <span>Candidate / User Portal</span>
+            </button>
+        </div>
+
+        <!-- PORTAL 1: HR & RECRUITER LOGIN FORM -->
+        <div id="hrLoginSection" style="display: {{ 'block' if active_portal != 'candidate' else 'none' }};">
+            <div style="background: rgba(37, 99, 235, 0.08); border: 1px solid rgba(37, 99, 235, 0.25); border-radius: 4px; padding: 0.65rem 0.85rem; margin-bottom: 1.25rem;">
+                <div style="font-size: 0.72rem; font-weight: 700; color: #93C5FD; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.2rem;">
+                    HR Recruiter & Assessor Workspace
+                </div>
+                <div style="font-size: 0.74rem; color: var(--text-secondary);">
+                    Access candidate pipeline, multiple resume ingestion, and requirement verification.
+                </div>
+            </div>
+
+            <form id="formHrLogin" action="/login" method="POST" style="display: flex; flex-direction: column; gap: 1.1rem;">
+                <input type="hidden" name="portal_type" value="hr">
+
+                <div>
+                    <label for="hrEmail" style="display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Corporate Email</label>
+                    <input type="email" id="hrEmail" name="email" value="hr.evaluator@recruitment.internal" required class="search-input" style="padding-left: 0.85rem; border-radius: 4px; font-size: 0.82rem;">
+                </div>
+
+                <div>
+                    <label for="hrPassword" style="display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Password</label>
+                    <input type="password" id="hrPassword" name="password" value="CorporateAccessKey2026" required class="search-input" style="padding-left: 0.85rem; border-radius: 4px; font-size: 0.82rem;">
+                </div>
+
+                <div>
+                    <label for="hrRole" style="display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Assessor Role</label>
+                    <select id="hrRole" name="role" class="search-input" style="padding: 0.5rem 0.85rem; border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary); font-size: 0.8rem;">
+                        <option value="Lead Technical Assessor">Lead Technical Assessor</option>
+                        <option value="Senior Talent Acquisition Lead">Senior Talent Acquisition Lead</option>
+                        <option value="Technical Recruitment Manager">Technical Recruitment Manager</option>
+                        <option value="Head of Data Science Hiring">Head of Data Science Hiring</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 0.6rem; margin-top: 0.4rem; flex-wrap: wrap;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1; border-radius: 4px; padding: 0.65rem; font-weight: 700; font-size: 0.84rem;">
+                        <i data-lucide="log-in" style="width: 14px; height: 14px;"></i> Sign In as HR Recruiter
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="btnQuickDemoHr" style="border-radius: 4px; padding: 0.65rem 0.85rem; font-size: 0.76rem;" title="1-Click Demo Access">
+                        Quick Demo Sign In
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- PORTAL 2: CANDIDATE / USER LOGIN FORM -->
+        <div id="candidateLoginSection" style="display: {{ 'block' if active_portal == 'candidate' else 'none' }};">
+            <div style="background: rgba(22, 163, 74, 0.08); border: 1px solid rgba(22, 163, 74, 0.25); border-radius: 4px; padding: 0.65rem 0.85rem; margin-bottom: 1.25rem;">
+                <div style="font-size: 0.72rem; font-weight: 700; color: #86EFAC; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.2rem;">
+                    Candidate Self-Assessment Portal
+                </div>
+                <div style="font-size: 0.74rem; color: var(--text-secondary);">
+                    Upload resume, view objective match score, identify skill gaps, and practice tailored mock questions.
+                </div>
+            </div>
+
+            <form id="formCandidateLogin" action="/login" method="POST" style="display: flex; flex-direction: column; gap: 1.1rem;">
+                <input type="hidden" name="portal_type" value="candidate">
+
+                <div>
+                    <label for="candName" style="display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Full Name</label>
+                    <input type="text" id="candName" name="name" value="Marcus Chen" required class="search-input" style="padding-left: 0.85rem; border-radius: 4px; font-size: 0.82rem;">
+                </div>
+
+                <div>
+                    <label for="candEmail" style="display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Candidate Email</label>
+                    <input type="email" id="candEmail" name="email" value="marcus.chen@email.com" required class="search-input" style="padding-left: 0.85rem; border-radius: 4px; font-size: 0.82rem;">
+                </div>
+
+                <div>
+                    <label for="candTrack" style="display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Target Discipline</label>
+                    <select id="candTrack" name="track" class="search-input" style="padding: 0.5rem 0.85rem; border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary); font-size: 0.8rem;">
+                        <option value="Data Science & GenAI">Data Science & Generative AI</option>
+                        <option value="ML Platform Engineering">ML Platform Engineering</option>
+                        <option value="BI & Data Analytics">BI & Data Analytics</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 0.6rem; margin-top: 0.4rem; flex-wrap: wrap;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1; border-radius: 4px; padding: 0.65rem; font-weight: 700; font-size: 0.84rem;">
+                        <i data-lucide="user-check" style="width: 14px; height: 14px;"></i> Sign In as Candidate
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="btnQuickDemoCandidate" style="border-radius: 4px; padding: 0.65rem 0.85rem; font-size: 0.76rem;" title="1-Click Demo Access">
+                        Quick Demo Sign In
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Footer Governance Links -->
+        <div style="margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); flex-wrap: wrap; gap: 0.5rem;">
+            <a href="/terms" style="color: var(--text-secondary);">Terms and Conditions</a>
+            <a href="/privacy" style="color: var(--text-secondary);">Privacy Policy</a>
+            <a href="/" style="color: #2563EB;">Direct Dashboard</a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) lucide.createIcons();
+
+            const tabHr = document.getElementById('tabBtnHr');
+            const tabCand = document.getElementById('tabBtnCandidate');
+            const hrSec = document.getElementById('hrLoginSection');
+            const candSec = document.getElementById('candidateLoginSection');
+
+            tabHr.addEventListener('click', () => {
+                tabHr.classList.add('active');
+                tabCand.classList.remove('active');
+                hrSec.style.display = 'block';
+                candSec.style.display = 'none';
+            });
+
+            tabCand.addEventListener('click', () => {
+                tabCand.classList.add('active');
+                tabHr.classList.remove('active');
+                candSec.style.display = 'block';
+                hrSec.style.display = 'none';
+            });
+
+            const btnQuickDemoHr = document.getElementById('btnQuickDemoHr');
+            if (btnQuickDemoHr) {
+                btnQuickDemoHr.addEventListener('click', () => {
+                    document.getElementById('formHrLogin').submit();
+                });
+            }
+
+            const btnQuickDemoCand = document.getElementById('btnQuickDemoCandidate');
+            if (btnQuickDemoCand) {
+                btnQuickDemoCand.addEventListener('click', () => {
+                    document.getElementById('formCandidateLogin').submit();
+                });
+            }
+        });
+    </script>
+</body>
+</html>
